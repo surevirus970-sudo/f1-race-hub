@@ -27,4 +27,6 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
   - Task 6: minor (deferred): Guard canScheduleExactAlarms() in UI and use distinct notification IDs
 - Task 7: complete (commits 5465599..b9e23a7, review clean)
   - Task 7: minor (deferred): Replace star imports in AppModule.kt
+- Task 8: complete (commits b9e23a7..47e3e84, review clean)
+  - Task 8: minor (deferred): Add "INTER" alias in tyre badge, use Locale.US in timer format
 
