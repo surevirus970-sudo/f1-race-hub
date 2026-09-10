@@ -25,4 +25,6 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
   - Task 5: minor (deferred): Rethrow CancellationException in refreshSchedule, wrap upsert in @Transaction
 - Task 6: complete (commits aadffad..5465599, review clean)
   - Task 6: minor (deferred): Guard canScheduleExactAlarms() in UI and use distinct notification IDs
+- Task 7: complete (commits 5465599..b9e23a7, review clean)
+  - Task 7: minor (deferred): Replace star imports in AppModule.kt
 
