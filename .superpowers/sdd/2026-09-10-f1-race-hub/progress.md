@@ -11,3 +11,8 @@
 | Task 8 -> Task 9..13 | F1Theme/Tokens -> Compose Screens | Clean (All color tokens and tyre badges defined) | None |
 
 Pre-flight scan: 0 conflicts detected. Plan verified against spec.
+
+## Task Progress
+- Task 1: complete (commits 8037206..04a1987, review clean)
+  - Task 1: minor (deferred): Add KSP plugin for room-compiler during Task 4
+
