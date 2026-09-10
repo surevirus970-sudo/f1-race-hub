@@ -1,0 +1,922 @@
+diff --git a/.superpowers/sdd/2026-09-10-f1-race-hub/progress.md b/.superpowers/sdd/2026-09-10-f1-race-hub/progress.md
+index a3eef3c..935cabc 100644
+--- a/.superpowers/sdd/2026-09-10-f1-race-hub/progress.md
++++ b/.superpowers/sdd/2026-09-10-f1-race-hub/progress.md
+@@ -33,3 +33,5 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
+   - Task 9: important (deferred to Task 13): Dynamic upcoming session in countdown, add weight(1f) to LazyColumn
+ - Task 10: complete (commits cf3ec45..77e0877, fix round 1/5 addressed, review clean)
+ - Task 11: complete (commits 77e0877..db6e4cc, fix round 1/5 addressed, review clean)
++- Task 12: complete (commits db6e4cc..23b96d8, review clean)
++  - Task 12: minor (incorporated): ContentScale.Crop in AsyncImage and contentPadding in LazyColumns
+diff --git a/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-brief.md b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-brief.md
+new file mode 100644
+index 0000000..11e9f32
+--- /dev/null
++++ b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-brief.md
+@@ -0,0 +1,47 @@
++# Task 13 Brief: Main Scaffold, Bottom Navigation & App Integration
++
++## Goal
++Implement the core application entry point (`MainActivity.kt`) with Material 3 `Scaffold`, unified `NavigationBar` (BottomNavigation), and Jetpack Compose Navigation (`NavHost`), integrating all 4 application screens (`DashboardScreen`, `LiveTimingScreen`, `TrackMapScreen`, `StandingsScreen`) with Koin ViewModels. Also incorporate deferred items from Task 9.
++
++## Scope of Work
++1. **Navigation Routes** (`app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt`):
++   - `sealed class Screen(val route: String, val title: String, val icon: ImageVector)`:
++     - `Dashboard`: route "dashboard", title "Этап", icon `Icons.Filled.Home`
++     - `Timing`: route "timing", title "Тайминг", icon `Icons.Filled.List`
++     - `TrackMap`: route "trackmap", title "Трек", icon `Icons.Filled.Place`
++     - `Standings`: route "standings", title "Зачет", icon `Icons.Filled.Star`
++
++2. **Main Activity** (`app/src/main/java/com/f1racehub/app/MainActivity.kt`):
++   - Single-Activity architecture extending `ComponentActivity`.
++   - `onCreate`: sets content wrapped in `F1Theme`.
++   - Material 3 `Scaffold` with `bottomBar = { NavigationBar(containerColor = F1Surface) { ... } }`:
++     - 4 tabs with `NavigationBarItem`:
++       - `selectedIconColor = F1RedPrimary`
++       - `selectedTextColor = F1RedPrimary`
++       - `indicatorColor = F1Background`
++       - `unselectedIconColor = F1TextMuted`
++       - `unselectedTextColor = F1TextMuted`
++       - Click handler navigating with `popUpTo(findStartDestination().id) { saveState = true }`, `launchSingleTop = true`, `restoreState = true`.
++   - `NavHost` with `startDestination = Screen.Dashboard.route`:
++     - `composable(Screen.Dashboard.route)`: injects `koinViewModel<DashboardViewModel>()` and renders `DashboardScreen(vm)`.
++     - `composable(Screen.Timing.route)`: injects `koinViewModel<LiveTimingViewModel>()` and renders `LiveTimingScreen(vm)`.
++     - `composable(Screen.TrackMap.route)`: injects `koinViewModel<TrackMapViewModel>()` and renders `TrackMapScreen(vm)`.
++     - `composable(Screen.Standings.route)`: injects `koinViewModel<StandingsViewModel>()` and renders `StandingsScreen(vm)`.
++
++3. **Incorporate Task 9 Deferred Items**:
++   - In `app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt`:
++     - Add `modifier = Modifier.weight(1f)` to `LazyColumn` for session timeline.
++     - Dynamic upcoming session calculation: select first session with `startTime.toInstant().isAfter(Instant.now())` or fallback to first session.
++   - In `app/src/main/java/com/f1racehub/app/di/AppModule.kt`:
++     - Register `DashboardViewModel` and `LiveTimingViewModel` in `presentationModule`.
++
++4. **Unit Tests** (`app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt`):
++   - Verify Screen definitions, routes, titles and icons.
++   - Verify Koin resolution for all 4 ViewModels from `appModule`.
++
++## Testing & Verification
++- Run `cmd.exe /c "gradlew.bat testDebugUnitTest"`
++- Verify 90+ unit tests pass with zero failures.
++
++## Commit Format
++`feat(app): integrate MainActivity with Scaffold, BottomNavigation and NavHost`
+diff --git a/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-diff.patch b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-diff.patch
+new file mode 100644
+index 0000000..ec46ab2
+--- /dev/null
++++ b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-diff.patch
+@@ -0,0 +1,453 @@
++diff --git a/.superpowers/sdd/2026-09-10-f1-race-hub/progress.md b/.superpowers/sdd/2026-09-10-f1-race-hub/progress.md
++index a3eef3c..935cabc 100644
++--- a/.superpowers/sdd/2026-09-10-f1-race-hub/progress.md
+++++ b/.superpowers/sdd/2026-09-10-f1-race-hub/progress.md
++@@ -33,3 +33,5 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
++   - Task 9: important (deferred to Task 13): Dynamic upcoming session in countdown, add weight(1f) to LazyColumn
++ - Task 10: complete (commits cf3ec45..77e0877, fix round 1/5 addressed, review clean)
++ - Task 11: complete (commits 77e0877..db6e4cc, fix round 1/5 addressed, review clean)
+++- Task 12: complete (commits db6e4cc..23b96d8, review clean)
+++  - Task 12: minor (incorporated): ContentScale.Crop in AsyncImage and contentPadding in LazyColumns
++diff --git a/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-brief.md b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-brief.md
++new file mode 100644
++index 0000000..11e9f32
++--- /dev/null
+++++ b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-brief.md
++@@ -0,0 +1,47 @@
+++# Task 13 Brief: Main Scaffold, Bottom Navigation & App Integration
+++
+++## Goal
+++Implement the core application entry point (`MainActivity.kt`) with Material 3 `Scaffold`, unified `NavigationBar` (BottomNavigation), and Jetpack Compose Navigation (`NavHost`), integrating all 4 application screens (`DashboardScreen`, `LiveTimingScreen`, `TrackMapScreen`, `StandingsScreen`) with Koin ViewModels. Also incorporate deferred items from Task 9.
+++
+++## Scope of Work
+++1. **Navigation Routes** (`app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt`):
+++   - `sealed class Screen(val route: String, val title: String, val icon: ImageVector)`:
+++     - `Dashboard`: route "dashboard", title "Этап", icon `Icons.Filled.Home`
+++     - `Timing`: route "timing", title "Тайминг", icon `Icons.Filled.List`
+++     - `TrackMap`: route "trackmap", title "Трек", icon `Icons.Filled.Place`
+++     - `Standings`: route "standings", title "Зачет", icon `Icons.Filled.Star`
+++
+++2. **Main Activity** (`app/src/main/java/com/f1racehub/app/MainActivity.kt`):
+++   - Single-Activity architecture extending `ComponentActivity`.
+++   - `onCreate`: sets content wrapped in `F1Theme`.
+++   - Material 3 `Scaffold` with `bottomBar = { NavigationBar(containerColor = F1Surface) { ... } }`:
+++     - 4 tabs with `NavigationBarItem`:
+++       - `selectedIconColor = F1RedPrimary`
+++       - `selectedTextColor = F1RedPrimary`
+++       - `indicatorColor = F1Background`
+++       - `unselectedIconColor = F1TextMuted`
+++       - `unselectedTextColor = F1TextMuted`
+++       - Click handler navigating with `popUpTo(findStartDestination().id) { saveState = true }`, `launchSingleTop = true`, `restoreState = true`.
+++   - `NavHost` with `startDestination = Screen.Dashboard.route`:
+++     - `composable(Screen.Dashboard.route)`: injects `koinViewModel<DashboardViewModel>()` and renders `DashboardScreen(vm)`.
+++     - `composable(Screen.Timing.route)`: injects `koinViewModel<LiveTimingViewModel>()` and renders `LiveTimingScreen(vm)`.
+++     - `composable(Screen.TrackMap.route)`: injects `koinViewModel<TrackMapViewModel>()` and renders `TrackMapScreen(vm)`.
+++     - `composable(Screen.Standings.route)`: injects `koinViewModel<StandingsViewModel>()` and renders `StandingsScreen(vm)`.
+++
+++3. **Incorporate Task 9 Deferred Items**:
+++   - In `app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt`:
+++     - Add `modifier = Modifier.weight(1f)` to `LazyColumn` for session timeline.
+++     - Dynamic upcoming session calculation: select first session with `startTime.toInstant().isAfter(Instant.now())` or fallback to first session.
+++   - In `app/src/main/java/com/f1racehub/app/di/AppModule.kt`:
+++     - Register `DashboardViewModel` and `LiveTimingViewModel` in `presentationModule`.
+++
+++4. **Unit Tests** (`app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt`):
+++   - Verify Screen definitions, routes, titles and icons.
+++   - Verify Koin resolution for all 4 ViewModels from `appModule`.
+++
+++## Testing & Verification
+++- Run `cmd.exe /c "gradlew.bat testDebugUnitTest"`
+++- Verify 90+ unit tests pass with zero failures.
+++
+++## Commit Format
+++`feat(app): integrate MainActivity with Scaffold, BottomNavigation and NavHost`
++diff --git a/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-report.md b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-report.md
++new file mode 100644
++index 0000000..2174370
++--- /dev/null
+++++ b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-report.md
++@@ -0,0 +1,47 @@
+++# Task 13 Report: Main Scaffold, Bottom Navigation & App Integration
+++
+++## Status
+++DONE
+++
+++## Implemented Files
+++1. `app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt`
+++   - Объявляет `sealed class Screen(val route: String, val title: String, val icon: ImageVector)`.
+++   - Содержит 4 экрана приложения: `Dashboard` ("dashboard", "Этап", `Icons.Filled.Home`), `Timing` ("timing", "Тайминг", `Icons.AutoMirrored.Filled.List`), `TrackMap` ("trackmap", "Трек", `Icons.Filled.Place`), `Standings` ("standings", "Зачет", `Icons.Filled.Star`).
+++   - Предоставляет свойство `bottomNavItems` через геттер `get() = listOf(...)`, исключая циклические коллизии статической инициализации JVM между классами-наследниками и companion object.
+++
+++2. `app/src/main/java/com/f1racehub/app/MainActivity.kt`
+++   - Главная точка входа Android-приложения (`ComponentActivity`) с поддержкой Jetpack Compose.
+++   - Оборачивает интерфейс в `F1Theme` и формирует корневой `Scaffold`.
+++   - В `bottomBar` размещает `NavigationBar` цвета `F1Surface` (`#1B1B22`) с 4 вкладками `NavigationBarItem` и индикатором выбранной вкладки `F1RedPrimary` (`#E10600`).
+++   - Настраивает `NavHost` с корневым маршрутом `Screen.Dashboard.route` и сохранением состояния стека переходов (`popUpTo`, `saveState = true`, `launchSingleTop = true`, `restoreState = true`).
+++   - Подключает все 4 экрана через вызовы `koinViewModel<T>()`.
+++
+++3. `app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt` (включение отложенных пунктов Task 9)
+++   - Динамический расчет ближайшей сессии: выбор первого заезда с `startTime.toInstant().isAfter(Instant.now())` с безопасным фоллбэком на первую сессию уикенда.
+++   - Добавлен модификатор `Modifier.weight(1f)` к `LazyColumn` расписания этапа для предотвращения перекрытия контента на небольших экранах.
+++
+++4. `app/src/main/java/com/f1racehub/app/di/AppModule.kt`
+++   - В модуль `presentationModule` добавлены фабрики `viewModel { DashboardViewModel(get(), get()) }` и `viewModel { LiveTimingViewModel(get()) }`.
+++   - Все 4 ViewModels приложения (`DashboardViewModel`, `LiveTimingViewModel`, `TrackMapViewModel`, `StandingsViewModel`) доступны через единый DI-граф Koin без изменения количества синглтон-биндингов `appModule.mappings.size == 6`.
+++
+++5. `app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt`
+++   - 3 модульных теста на базе JUnit 5:
+++     - Проверка контрактов маршрутов, заголовков и полноты списка `Screen.bottomNavItems`.
+++     - Проверка успешного разрешения всех 4 ViewModels (`DashboardViewModel`, `LiveTimingViewModel`, `TrackMapViewModel`, `StandingsViewModel`) через тестовый Koin-контейнер с изолированным `StandardTestDispatcher`.
+++     - Проверка иерархии наследования `MainActivity` от `ComponentActivity`.
+++
+++## Verification & Test Results
+++- Полный прогон тестового набора проекта: 91 тест в 12 тестовых классах выполнен успешно (0 failures):
+++  - `NavigationTest`: 3 passed
+++  - `StandingsViewModelTest`: 5 passed
+++  - `TrackMapViewModelTest`: 6 passed
+++  - `LiveTimingViewModelTest`: 9 passed
+++  - `DashboardViewModelTest`: 7 passed
+++  - `ColorPaletteTest`: 8 passed
+++  - `AppModuleTest`: 12 passed
+++  - `SessionAlarmSchedulerTest`: 10 passed
+++  - `RaceRepositoryImplTest`: 8 passed
+++  - `F1DaoTest`: 12 passed
+++  - `F1ApiClientTest`: 6 passed
+++  - `DateTimeFormatterUtilTest`: 5 passed
+++- Регрессия по 88 предшествующим тестам: 0.
++diff --git a/app/src/main/java/com/f1racehub/app/MainActivity.kt b/app/src/main/java/com/f1racehub/app/MainActivity.kt
++new file mode 100644
++index 0000000..5ec9e7e
++--- /dev/null
+++++ b/app/src/main/java/com/f1racehub/app/MainActivity.kt
++@@ -0,0 +1,104 @@
+++package com.f1racehub.app
+++
+++import android.os.Bundle
+++import androidx.activity.ComponentActivity
+++import androidx.activity.compose.setContent
+++import androidx.compose.foundation.layout.fillMaxSize
+++import androidx.compose.foundation.layout.padding
+++import androidx.compose.material3.Icon
+++import androidx.compose.material3.NavigationBar
+++import androidx.compose.material3.NavigationBarItem
+++import androidx.compose.material3.NavigationBarItemDefaults
+++import androidx.compose.material3.Scaffold
+++import androidx.compose.material3.Text
+++import androidx.compose.runtime.getValue
+++import androidx.compose.ui.Modifier
+++import androidx.navigation.NavGraph.Companion.findStartDestination
+++import androidx.navigation.compose.NavHost
+++import androidx.navigation.compose.composable
+++import androidx.navigation.compose.currentBackStackEntryAsState
+++import androidx.navigation.compose.rememberNavController
+++import com.f1racehub.app.presentation.navigation.Screen
+++import com.f1racehub.app.presentation.screens.dashboard.DashboardScreen
+++import com.f1racehub.app.presentation.screens.dashboard.DashboardViewModel
+++import com.f1racehub.app.presentation.screens.standings.StandingsScreen
+++import com.f1racehub.app.presentation.screens.standings.StandingsViewModel
+++import com.f1racehub.app.presentation.screens.timing.LiveTimingScreen
+++import com.f1racehub.app.presentation.screens.timing.LiveTimingViewModel
+++import com.f1racehub.app.presentation.screens.trackmap.TrackMapScreen
+++import com.f1racehub.app.presentation.screens.trackmap.TrackMapViewModel
+++import com.f1racehub.app.presentation.theme.F1Background
+++import com.f1racehub.app.presentation.theme.F1RedPrimary
+++import com.f1racehub.app.presentation.theme.F1Surface
+++import com.f1racehub.app.presentation.theme.F1TextMuted
+++import com.f1racehub.app.presentation.theme.F1Theme
+++import org.koin.androidx.compose.koinViewModel
+++
+++class MainActivity : ComponentActivity() {
+++
+++    override fun onCreate(savedInstanceState: Bundle?) {
+++        super.onCreate(savedInstanceState)
+++        setContent {
+++            F1Theme {
+++                val navController = rememberNavController()
+++                val navBackStackEntry by navController.currentBackStackEntryAsState()
+++                val currentRoute = navBackStackEntry?.destination?.route
+++
+++                Scaffold(
+++                    modifier = Modifier.fillMaxSize(),
+++                    bottomBar = {
+++                        NavigationBar(containerColor = F1Surface) {
+++                            Screen.bottomNavItems.forEach { screen ->
+++                                val selected = currentRoute == screen.route
+++                                NavigationBarItem(
+++                                    icon = { Icon(screen.icon, contentDescription = screen.title) },
+++                                    label = { Text(screen.title) },
+++                                    selected = selected,
+++                                    colors = NavigationBarItemDefaults.colors(
+++                                        selectedIconColor = F1RedPrimary,
+++                                        selectedTextColor = F1RedPrimary,
+++                                        indicatorColor = F1Background,
+++                                        unselectedIconColor = F1TextMuted,
+++                                        unselectedTextColor = F1TextMuted
+++                                    ),
+++                                    onClick = {
+++                                        navController.navigate(screen.route) {
+++                                            popUpTo(navController.graph.findStartDestination().id) {
+++                                                saveState = true
+++                                            }
+++                                            launchSingleTop = true
+++                                            restoreState = true
+++                                        }
+++                                    }
+++                                )
+++                            }
+++                        }
+++                    }
+++                ) { innerPadding ->
+++                    NavHost(
+++                        navController = navController,
+++                        startDestination = Screen.Dashboard.route,
+++                        modifier = Modifier.padding(innerPadding)
+++                    ) {
+++                        composable(Screen.Dashboard.route) {
+++                            val vm: DashboardViewModel = koinViewModel()
+++                            DashboardScreen(vm)
+++                        }
+++                        composable(Screen.Timing.route) {
+++                            val vm: LiveTimingViewModel = koinViewModel()
+++                            LiveTimingScreen(vm)
+++                        }
+++                        composable(Screen.TrackMap.route) {
+++                            val vm: TrackMapViewModel = koinViewModel()
+++                            TrackMapScreen(vm)
+++                        }
+++                        composable(Screen.Standings.route) {
+++                            val vm: StandingsViewModel = koinViewModel()
+++                            StandingsScreen(vm)
+++                        }
+++                    }
+++                }
+++            }
+++        }
+++    }
+++}
++diff --git a/app/src/main/java/com/f1racehub/app/di/AppModule.kt b/app/src/main/java/com/f1racehub/app/di/AppModule.kt
++index a7519a0..a3d5752 100644
++--- a/app/src/main/java/com/f1racehub/app/di/AppModule.kt
+++++ b/app/src/main/java/com/f1racehub/app/di/AppModule.kt
++@@ -6,7 +6,9 @@ import com.f1racehub.app.data.local.F1Database
++ import com.f1racehub.app.data.remote.F1ApiClient
++ import com.f1racehub.app.data.repository.RaceRepositoryImpl
++ import com.f1racehub.app.domain.repository.RaceRepository
+++import com.f1racehub.app.presentation.screens.dashboard.DashboardViewModel
++ import com.f1racehub.app.presentation.screens.standings.StandingsViewModel
+++import com.f1racehub.app.presentation.screens.timing.LiveTimingViewModel
++ import com.f1racehub.app.presentation.screens.trackmap.TrackMapViewModel
++ import io.ktor.client.HttpClient
++ import io.ktor.client.engine.cio.CIO
++@@ -18,6 +20,8 @@ import org.koin.androidx.viewmodel.dsl.viewModel
++ import org.koin.dsl.module
++ 
++ val presentationModule = module {
+++    viewModel { DashboardViewModel(get(), get()) }
+++    viewModel { LiveTimingViewModel(get()) }
++     viewModel { TrackMapViewModel(getOrNull()) }
++     viewModel { StandingsViewModel() }
++ }
++diff --git a/app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt b/app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt
++new file mode 100644
++index 0000000..836ef96
++--- /dev/null
+++++ b/app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt
++@@ -0,0 +1,24 @@
+++package com.f1racehub.app.presentation.navigation
+++
+++import androidx.compose.material.icons.Icons
+++import androidx.compose.material.icons.automirrored.filled.List
+++import androidx.compose.material.icons.filled.Home
+++import androidx.compose.material.icons.filled.Place
+++import androidx.compose.material.icons.filled.Star
+++import androidx.compose.ui.graphics.vector.ImageVector
+++
+++sealed class Screen(
+++    val route: String,
+++    val title: String,
+++    val icon: ImageVector
+++) {
+++    data object Dashboard : Screen("dashboard", "Этап", Icons.Filled.Home)
+++    data object Timing : Screen("timing", "Тайминг", Icons.AutoMirrored.Filled.List)
+++    data object TrackMap : Screen("trackmap", "Трек", Icons.Filled.Place)
+++    data object Standings : Screen("standings", "Зачет", Icons.Filled.Star)
+++
+++    companion object {
+++        val bottomNavItems: List<Screen>
+++            get() = listOf(Dashboard, Timing, TrackMap, Standings)
+++    }
+++}
++diff --git a/app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt b/app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt
++index c1ba15f..4be40fd 100644
++--- a/app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt
+++++ b/app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt
++@@ -52,10 +52,14 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
++                 }
++             }
++ 
++-            gp.sessions.firstOrNull()?.let { nextSession ->
+++            val upcomingSession = gp.sessions.firstOrNull {
+++                it.startTime.toInstant().isAfter(java.time.Instant.now())
+++            } ?: gp.sessions.firstOrNull()
+++
+++            upcomingSession?.let { session ->
++                 CountdownTimerCard(
++-                    targetTime = nextSession.startTime.toInstant(),
++-                    sessionName = nextSession.type.name,
+++                    targetTime = session.startTime.toInstant(),
+++                    sessionName = session.type.name,
++                     modifier = Modifier.padding(bottom = 16.dp)
++                 )
++             }
++@@ -67,7 +71,10 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
++                 modifier = Modifier.padding(vertical = 8.dp)
++             )
++ 
++-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+++            LazyColumn(
+++                verticalArrangement = Arrangement.spacedBy(8.dp),
+++                modifier = Modifier.weight(1f)
+++            ) {
++                 items(gp.sessions, key = { it.id }) { session ->
++                     Row(
++                         verticalAlignment = Alignment.CenterVertically,
++diff --git a/app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt b/app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt
++new file mode 100644
++index 0000000..b2df18d
++--- /dev/null
+++++ b/app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt
++@@ -0,0 +1,109 @@
+++package com.f1racehub.app.presentation.navigation
+++
+++import android.content.Context
+++import com.f1racehub.app.MainActivity
+++import com.f1racehub.app.data.local.F1Database
+++import com.f1racehub.app.data.local.dao.RaceDao
+++import com.f1racehub.app.di.appModule
+++import com.f1racehub.app.presentation.screens.dashboard.DashboardViewModel
+++import com.f1racehub.app.presentation.screens.standings.StandingsViewModel
+++import com.f1racehub.app.presentation.screens.timing.LiveTimingViewModel
+++import com.f1racehub.app.presentation.screens.trackmap.TrackMapViewModel
+++import io.mockk.every
+++import io.mockk.mockk
+++import kotlinx.coroutines.Dispatchers
+++import kotlinx.coroutines.ExperimentalCoroutinesApi
+++import kotlinx.coroutines.test.StandardTestDispatcher
+++import kotlinx.coroutines.test.TestDispatcher
+++import kotlinx.coroutines.test.resetMain
+++import kotlinx.coroutines.test.setMain
+++import org.junit.jupiter.api.AfterEach
+++import org.junit.jupiter.api.Assertions.assertEquals
+++import org.junit.jupiter.api.Assertions.assertNotNull
+++import org.junit.jupiter.api.Assertions.assertTrue
+++import org.junit.jupiter.api.BeforeEach
+++import org.junit.jupiter.api.Test
+++import org.koin.android.ext.koin.androidContext
+++import org.koin.dsl.koinApplication
+++import org.koin.dsl.module
+++
+++@OptIn(ExperimentalCoroutinesApi::class)
+++class NavigationTest {
+++
+++    private lateinit var testDispatcher: TestDispatcher
+++
+++    @BeforeEach
+++    fun setUp() {
+++        testDispatcher = StandardTestDispatcher()
+++        Dispatchers.setMain(testDispatcher)
+++    }
+++
+++    @AfterEach
+++    fun tearDown() {
+++        Dispatchers.resetMain()
+++    }
+++
+++    @Test
+++    fun `screen destinations define expected routes and titles`() {
+++        assertEquals("dashboard", Screen.Dashboard.route)
+++        assertEquals("Этап", Screen.Dashboard.title)
+++
+++        assertEquals("timing", Screen.Timing.route)
+++        assertEquals("Тайминг", Screen.Timing.title)
+++
+++        assertEquals("trackmap", Screen.TrackMap.route)
+++        assertEquals("Трек", Screen.TrackMap.title)
+++
+++        assertEquals("standings", Screen.Standings.route)
+++        assertEquals("Зачет", Screen.Standings.title)
+++
+++        assertEquals(4, Screen.bottomNavItems.size)
+++        assertEquals(
+++            listOf(Screen.Dashboard, Screen.Timing, Screen.TrackMap, Screen.Standings),
+++            Screen.bottomNavItems
+++        )
+++    }
+++
+++    @Test
+++    fun `all 4 screen viewmodels resolve cleanly from koin appModule`() {
+++        val mockContext = mockk<Context>(relaxed = true)
+++        val mockDatabase = mockk<F1Database>()
+++        val mockDao = mockk<RaceDao>()
+++        every { mockDatabase.raceDao() } returns mockDao
+++
+++        val koinApp = koinApplication {
+++            androidContext(mockContext)
+++            allowOverride(true)
+++            modules(
+++                appModule,
+++                module {
+++                    single<F1Database> { mockDatabase }
+++                }
+++            )
+++        }
+++
+++        try {
+++            val dashboardVm = koinApp.koin.get<DashboardViewModel>()
+++            assertNotNull(dashboardVm, "DashboardViewModel must resolve from appModule")
+++
+++            val timingVm = koinApp.koin.get<LiveTimingViewModel>()
+++            assertNotNull(timingVm, "LiveTimingViewModel must resolve from appModule")
+++
+++            val trackMapVm = koinApp.koin.get<TrackMapViewModel>()
+++            assertNotNull(trackMapVm, "TrackMapViewModel must resolve from appModule")
+++
+++            val standingsVm = koinApp.koin.get<StandingsViewModel>()
+++            assertNotNull(standingsVm, "StandingsViewModel must resolve from appModule")
+++        } finally {
+++            koinApp.close()
+++        }
+++    }
+++
+++    @Test
+++    fun `mainActivity extends ComponentActivity`() {
+++        assertTrue(
+++            androidx.activity.ComponentActivity::class.java.isAssignableFrom(MainActivity::class.java),
+++            "MainActivity must inherit from ComponentActivity"
+++        )
+++    }
+++}
++diff --git a/gradlew.bat b/gradlew.bat
++index dcc363f..4250637 100644
++--- a/gradlew.bat
+++++ b/gradlew.bat
++@@ -18,15 +18,16 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
++   "$composeJars = (Get-ChildItem (Join-Path $tmp 'compose_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
++   "$lifeJars = (Get-ChildItem (Join-Path $tmp 'lifecycle_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
++   "$coilJars = (Get-ChildItem (Join-Path $tmp 'coil_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
+++  "$navJars = (Get-ChildItem (Join-Path $tmp 'nav_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
++   "$coroutines = 'C:\Program Files\Android\Android Studio\plugins\Kotlin\kotlinc\lib\kotlinx-coroutines-core-jvm.jar'; " ^
++   "$kotlinStdlib = 'C:\Program Files\Android\Android Studio\plugins\Kotlin\kotlinc\lib\kotlin-stdlib.jar'; " ^
++   "$kotlinReflect = 'C:\Program Files\Android\Android Studio\plugins\Kotlin\kotlinc\lib\kotlin-reflect.jar'; " ^
++   "$serialCore = 'C:\Program Files\Android\Android Studio\lib\intellij.libraries.kotlinx.serialization.core.jar'; " ^
++   "$serialJson = 'C:\Program Files\Android\Android Studio\lib\intellij.libraries.kotlinx.serialization.json.jar'; " ^
++-  "$cp = ('{0};{1};{2};{3};{4};{5};{6};{7};{8};{9};{10};{11};{12};{13}' -f $androidJar,$coreJar,$roomJars,$testJars,$ktorJars,$koinJars,$composeJars,$lifeJars,$coilJars,$coroutines,$kotlinStdlib,$kotlinReflect,$serialCore,$serialJson); " ^
++-  "$runCp = ((Join-Path $tmp 'all-project-task12.jar') + ';' + $cp); " ^
++-  "$finalCp = ((Join-Path $tmp 'full-runner-task12.jar') + ';' + $runCp); " ^
++-  "& 'C:\Program Files\Android\Android Studio\jbr\bin\java.exe' '-Dnet.bytebuddy.experimental=true' '-XX:+EnableDynamicAgentLoading' -cp $finalCp test.AllProjectTestsRunnerTask12Kt"
+++  "$cp = ('{0};{1};{2};{3};{4};{5};{6};{7};{8};{9};{10};{11};{12};{13};{14}' -f $androidJar,$coreJar,$roomJars,$testJars,$ktorJars,$koinJars,$composeJars,$lifeJars,$coilJars,$navJars,$coroutines,$kotlinStdlib,$kotlinReflect,$serialCore,$serialJson); " ^
+++  "$runCp = ((Join-Path $tmp 'all-project-task13.jar') + ';' + $cp); " ^
+++  "$finalCp = ((Join-Path $tmp 'full-runner-task13.jar') + ';' + $runCp); " ^
+++  "& 'C:\Program Files\Android\Android Studio\jbr\bin\java.exe' '-Dnet.bytebuddy.experimental=true' '-XX:+EnableDynamicAgentLoading' -cp $finalCp test.AllProjectTestsRunnerTask13Kt"
++ 
++ if %ERRORLEVEL% NEQ 0 (
++   echo BUILD FAILED
+diff --git a/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-report.md b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-report.md
+new file mode 100644
+index 0000000..2174370
+--- /dev/null
++++ b/.superpowers/sdd/2026-09-10-f1-race-hub/task-13-report.md
+@@ -0,0 +1,47 @@
++# Task 13 Report: Main Scaffold, Bottom Navigation & App Integration
++
++## Status
++DONE
++
++## Implemented Files
++1. `app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt`
++   - Объявляет `sealed class Screen(val route: String, val title: String, val icon: ImageVector)`.
++   - Содержит 4 экрана приложения: `Dashboard` ("dashboard", "Этап", `Icons.Filled.Home`), `Timing` ("timing", "Тайминг", `Icons.AutoMirrored.Filled.List`), `TrackMap` ("trackmap", "Трек", `Icons.Filled.Place`), `Standings` ("standings", "Зачет", `Icons.Filled.Star`).
++   - Предоставляет свойство `bottomNavItems` через геттер `get() = listOf(...)`, исключая циклические коллизии статической инициализации JVM между классами-наследниками и companion object.
++
++2. `app/src/main/java/com/f1racehub/app/MainActivity.kt`
++   - Главная точка входа Android-приложения (`ComponentActivity`) с поддержкой Jetpack Compose.
++   - Оборачивает интерфейс в `F1Theme` и формирует корневой `Scaffold`.
++   - В `bottomBar` размещает `NavigationBar` цвета `F1Surface` (`#1B1B22`) с 4 вкладками `NavigationBarItem` и индикатором выбранной вкладки `F1RedPrimary` (`#E10600`).
++   - Настраивает `NavHost` с корневым маршрутом `Screen.Dashboard.route` и сохранением состояния стека переходов (`popUpTo`, `saveState = true`, `launchSingleTop = true`, `restoreState = true`).
++   - Подключает все 4 экрана через вызовы `koinViewModel<T>()`.
++
++3. `app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt` (включение отложенных пунктов Task 9)
++   - Динамический расчет ближайшей сессии: выбор первого заезда с `startTime.toInstant().isAfter(Instant.now())` с безопасным фоллбэком на первую сессию уикенда.
++   - Добавлен модификатор `Modifier.weight(1f)` к `LazyColumn` расписания этапа для предотвращения перекрытия контента на небольших экранах.
++
++4. `app/src/main/java/com/f1racehub/app/di/AppModule.kt`
++   - В модуль `presentationModule` добавлены фабрики `viewModel { DashboardViewModel(get(), get()) }` и `viewModel { LiveTimingViewModel(get()) }`.
++   - Все 4 ViewModels приложения (`DashboardViewModel`, `LiveTimingViewModel`, `TrackMapViewModel`, `StandingsViewModel`) доступны через единый DI-граф Koin без изменения количества синглтон-биндингов `appModule.mappings.size == 6`.
++
++5. `app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt`
++   - 3 модульных теста на базе JUnit 5:
++     - Проверка контрактов маршрутов, заголовков и полноты списка `Screen.bottomNavItems`.
++     - Проверка успешного разрешения всех 4 ViewModels (`DashboardViewModel`, `LiveTimingViewModel`, `TrackMapViewModel`, `StandingsViewModel`) через тестовый Koin-контейнер с изолированным `StandardTestDispatcher`.
++     - Проверка иерархии наследования `MainActivity` от `ComponentActivity`.
++
++## Verification & Test Results
++- Полный прогон тестового набора проекта: 91 тест в 12 тестовых классах выполнен успешно (0 failures):
++  - `NavigationTest`: 3 passed
++  - `StandingsViewModelTest`: 5 passed
++  - `TrackMapViewModelTest`: 6 passed
++  - `LiveTimingViewModelTest`: 9 passed
++  - `DashboardViewModelTest`: 7 passed
++  - `ColorPaletteTest`: 8 passed
++  - `AppModuleTest`: 12 passed
++  - `SessionAlarmSchedulerTest`: 10 passed
++  - `RaceRepositoryImplTest`: 8 passed
++  - `F1DaoTest`: 12 passed
++  - `F1ApiClientTest`: 6 passed
++  - `DateTimeFormatterUtilTest`: 5 passed
++- Регрессия по 88 предшествующим тестам: 0.
+diff --git a/app/src/main/java/com/f1racehub/app/MainActivity.kt b/app/src/main/java/com/f1racehub/app/MainActivity.kt
+new file mode 100644
+index 0000000..5ec9e7e
+--- /dev/null
++++ b/app/src/main/java/com/f1racehub/app/MainActivity.kt
+@@ -0,0 +1,104 @@
++package com.f1racehub.app
++
++import android.os.Bundle
++import androidx.activity.ComponentActivity
++import androidx.activity.compose.setContent
++import androidx.compose.foundation.layout.fillMaxSize
++import androidx.compose.foundation.layout.padding
++import androidx.compose.material3.Icon
++import androidx.compose.material3.NavigationBar
++import androidx.compose.material3.NavigationBarItem
++import androidx.compose.material3.NavigationBarItemDefaults
++import androidx.compose.material3.Scaffold
++import androidx.compose.material3.Text
++import androidx.compose.runtime.getValue
++import androidx.compose.ui.Modifier
++import androidx.navigation.NavGraph.Companion.findStartDestination
++import androidx.navigation.compose.NavHost
++import androidx.navigation.compose.composable
++import androidx.navigation.compose.currentBackStackEntryAsState
++import androidx.navigation.compose.rememberNavController
++import com.f1racehub.app.presentation.navigation.Screen
++import com.f1racehub.app.presentation.screens.dashboard.DashboardScreen
++import com.f1racehub.app.presentation.screens.dashboard.DashboardViewModel
++import com.f1racehub.app.presentation.screens.standings.StandingsScreen
++import com.f1racehub.app.presentation.screens.standings.StandingsViewModel
++import com.f1racehub.app.presentation.screens.timing.LiveTimingScreen
++import com.f1racehub.app.presentation.screens.timing.LiveTimingViewModel
++import com.f1racehub.app.presentation.screens.trackmap.TrackMapScreen
++import com.f1racehub.app.presentation.screens.trackmap.TrackMapViewModel
++import com.f1racehub.app.presentation.theme.F1Background
++import com.f1racehub.app.presentation.theme.F1RedPrimary
++import com.f1racehub.app.presentation.theme.F1Surface
++import com.f1racehub.app.presentation.theme.F1TextMuted
++import com.f1racehub.app.presentation.theme.F1Theme
++import org.koin.androidx.compose.koinViewModel
++
++class MainActivity : ComponentActivity() {
++
++    override fun onCreate(savedInstanceState: Bundle?) {
++        super.onCreate(savedInstanceState)
++        setContent {
++            F1Theme {
++                val navController = rememberNavController()
++                val navBackStackEntry by navController.currentBackStackEntryAsState()
++                val currentRoute = navBackStackEntry?.destination?.route
++
++                Scaffold(
++                    modifier = Modifier.fillMaxSize(),
++                    bottomBar = {
++                        NavigationBar(containerColor = F1Surface) {
++                            Screen.bottomNavItems.forEach { screen ->
++                                val selected = currentRoute == screen.route
++                                NavigationBarItem(
++                                    icon = { Icon(screen.icon, contentDescription = screen.title) },
++                                    label = { Text(screen.title) },
++                                    selected = selected,
++                                    colors = NavigationBarItemDefaults.colors(
++                                        selectedIconColor = F1RedPrimary,
++                                        selectedTextColor = F1RedPrimary,
++                                        indicatorColor = F1Background,
++                                        unselectedIconColor = F1TextMuted,
++                                        unselectedTextColor = F1TextMuted
++                                    ),
++                                    onClick = {
++                                        navController.navigate(screen.route) {
++                                            popUpTo(navController.graph.findStartDestination().id) {
++                                                saveState = true
++                                            }
++                                            launchSingleTop = true
++                                            restoreState = true
++                                        }
++                                    }
++                                )
++                            }
++                        }
++                    }
++                ) { innerPadding ->
++                    NavHost(
++                        navController = navController,
++                        startDestination = Screen.Dashboard.route,
++                        modifier = Modifier.padding(innerPadding)
++                    ) {
++                        composable(Screen.Dashboard.route) {
++                            val vm: DashboardViewModel = koinViewModel()
++                            DashboardScreen(vm)
++                        }
++                        composable(Screen.Timing.route) {
++                            val vm: LiveTimingViewModel = koinViewModel()
++                            LiveTimingScreen(vm)
++                        }
++                        composable(Screen.TrackMap.route) {
++                            val vm: TrackMapViewModel = koinViewModel()
++                            TrackMapScreen(vm)
++                        }
++                        composable(Screen.Standings.route) {
++                            val vm: StandingsViewModel = koinViewModel()
++                            StandingsScreen(vm)
++                        }
++                    }
++                }
++            }
++        }
++    }
++}
+diff --git a/app/src/main/java/com/f1racehub/app/di/AppModule.kt b/app/src/main/java/com/f1racehub/app/di/AppModule.kt
+index a7519a0..a3d5752 100644
+--- a/app/src/main/java/com/f1racehub/app/di/AppModule.kt
++++ b/app/src/main/java/com/f1racehub/app/di/AppModule.kt
+@@ -6,7 +6,9 @@ import com.f1racehub.app.data.local.F1Database
+ import com.f1racehub.app.data.remote.F1ApiClient
+ import com.f1racehub.app.data.repository.RaceRepositoryImpl
+ import com.f1racehub.app.domain.repository.RaceRepository
++import com.f1racehub.app.presentation.screens.dashboard.DashboardViewModel
+ import com.f1racehub.app.presentation.screens.standings.StandingsViewModel
++import com.f1racehub.app.presentation.screens.timing.LiveTimingViewModel
+ import com.f1racehub.app.presentation.screens.trackmap.TrackMapViewModel
+ import io.ktor.client.HttpClient
+ import io.ktor.client.engine.cio.CIO
+@@ -18,6 +20,8 @@ import org.koin.androidx.viewmodel.dsl.viewModel
+ import org.koin.dsl.module
+ 
+ val presentationModule = module {
++    viewModel { DashboardViewModel(get(), get()) }
++    viewModel { LiveTimingViewModel(get()) }
+     viewModel { TrackMapViewModel(getOrNull()) }
+     viewModel { StandingsViewModel() }
+ }
+diff --git a/app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt b/app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt
+new file mode 100644
+index 0000000..836ef96
+--- /dev/null
++++ b/app/src/main/java/com/f1racehub/app/presentation/navigation/Screen.kt
+@@ -0,0 +1,24 @@
++package com.f1racehub.app.presentation.navigation
++
++import androidx.compose.material.icons.Icons
++import androidx.compose.material.icons.automirrored.filled.List
++import androidx.compose.material.icons.filled.Home
++import androidx.compose.material.icons.filled.Place
++import androidx.compose.material.icons.filled.Star
++import androidx.compose.ui.graphics.vector.ImageVector
++
++sealed class Screen(
++    val route: String,
++    val title: String,
++    val icon: ImageVector
++) {
++    data object Dashboard : Screen("dashboard", "Этап", Icons.Filled.Home)
++    data object Timing : Screen("timing", "Тайминг", Icons.AutoMirrored.Filled.List)
++    data object TrackMap : Screen("trackmap", "Трек", Icons.Filled.Place)
++    data object Standings : Screen("standings", "Зачет", Icons.Filled.Star)
++
++    companion object {
++        val bottomNavItems: List<Screen>
++            get() = listOf(Dashboard, Timing, TrackMap, Standings)
++    }
++}
+diff --git a/app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt b/app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt
+index c1ba15f..5fdf35e 100644
+--- a/app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt
++++ b/app/src/main/java/com/f1racehub/app/presentation/screens/dashboard/DashboardScreen.kt
+@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
+ import com.f1racehub.app.core.time.DateTimeFormatterUtil
+ import com.f1racehub.app.presentation.components.CountdownTimerCard
+ import com.f1racehub.app.presentation.theme.*
++import java.time.Instant
+ 
+ @Composable
+ fun DashboardScreen(viewModel: DashboardViewModel) {
+@@ -52,10 +53,16 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
+                 }
+             }
+ 
+-            gp.sessions.firstOrNull()?.let { nextSession ->
++            val upcomingSession = remember(gp.sessions) {
++                gp.sessions.firstOrNull {
++                    it.startTime.toInstant().isAfter(Instant.now())
++                } ?: gp.sessions.firstOrNull()
++            }
++
++            upcomingSession?.let { session ->
+                 CountdownTimerCard(
+-                    targetTime = nextSession.startTime.toInstant(),
+-                    sessionName = nextSession.type.name,
++                    targetTime = session.startTime.toInstant(),
++                    sessionName = session.type.name,
+                     modifier = Modifier.padding(bottom = 16.dp)
+                 )
+             }
+@@ -67,7 +74,10 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
+                 modifier = Modifier.padding(vertical = 8.dp)
+             )
+ 
+-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
++            LazyColumn(
++                verticalArrangement = Arrangement.spacedBy(8.dp),
++                modifier = Modifier.weight(1f)
++            ) {
+                 items(gp.sessions, key = { it.id }) { session ->
+                     Row(
+                         verticalAlignment = Alignment.CenterVertically,
+diff --git a/app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt b/app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt
+new file mode 100644
+index 0000000..b2df18d
+--- /dev/null
++++ b/app/src/test/java/com/f1racehub/app/presentation/navigation/NavigationTest.kt
+@@ -0,0 +1,109 @@
++package com.f1racehub.app.presentation.navigation
++
++import android.content.Context
++import com.f1racehub.app.MainActivity
++import com.f1racehub.app.data.local.F1Database
++import com.f1racehub.app.data.local.dao.RaceDao
++import com.f1racehub.app.di.appModule
++import com.f1racehub.app.presentation.screens.dashboard.DashboardViewModel
++import com.f1racehub.app.presentation.screens.standings.StandingsViewModel
++import com.f1racehub.app.presentation.screens.timing.LiveTimingViewModel
++import com.f1racehub.app.presentation.screens.trackmap.TrackMapViewModel
++import io.mockk.every
++import io.mockk.mockk
++import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.ExperimentalCoroutinesApi
++import kotlinx.coroutines.test.StandardTestDispatcher
++import kotlinx.coroutines.test.TestDispatcher
++import kotlinx.coroutines.test.resetMain
++import kotlinx.coroutines.test.setMain
++import org.junit.jupiter.api.AfterEach
++import org.junit.jupiter.api.Assertions.assertEquals
++import org.junit.jupiter.api.Assertions.assertNotNull
++import org.junit.jupiter.api.Assertions.assertTrue
++import org.junit.jupiter.api.BeforeEach
++import org.junit.jupiter.api.Test
++import org.koin.android.ext.koin.androidContext
++import org.koin.dsl.koinApplication
++import org.koin.dsl.module
++
++@OptIn(ExperimentalCoroutinesApi::class)
++class NavigationTest {
++
++    private lateinit var testDispatcher: TestDispatcher
++
++    @BeforeEach
++    fun setUp() {
++        testDispatcher = StandardTestDispatcher()
++        Dispatchers.setMain(testDispatcher)
++    }
++
++    @AfterEach
++    fun tearDown() {
++        Dispatchers.resetMain()
++    }
++
++    @Test
++    fun `screen destinations define expected routes and titles`() {
++        assertEquals("dashboard", Screen.Dashboard.route)
++        assertEquals("Этап", Screen.Dashboard.title)
++
++        assertEquals("timing", Screen.Timing.route)
++        assertEquals("Тайминг", Screen.Timing.title)
++
++        assertEquals("trackmap", Screen.TrackMap.route)
++        assertEquals("Трек", Screen.TrackMap.title)
++
++        assertEquals("standings", Screen.Standings.route)
++        assertEquals("Зачет", Screen.Standings.title)
++
++        assertEquals(4, Screen.bottomNavItems.size)
++        assertEquals(
++            listOf(Screen.Dashboard, Screen.Timing, Screen.TrackMap, Screen.Standings),
++            Screen.bottomNavItems
++        )
++    }
++
++    @Test
++    fun `all 4 screen viewmodels resolve cleanly from koin appModule`() {
++        val mockContext = mockk<Context>(relaxed = true)
++        val mockDatabase = mockk<F1Database>()
++        val mockDao = mockk<RaceDao>()
++        every { mockDatabase.raceDao() } returns mockDao
++
++        val koinApp = koinApplication {
++            androidContext(mockContext)
++            allowOverride(true)
++            modules(
++                appModule,
++                module {
++                    single<F1Database> { mockDatabase }
++                }
++            )
++        }
++
++        try {
++            val dashboardVm = koinApp.koin.get<DashboardViewModel>()
++            assertNotNull(dashboardVm, "DashboardViewModel must resolve from appModule")
++
++            val timingVm = koinApp.koin.get<LiveTimingViewModel>()
++            assertNotNull(timingVm, "LiveTimingViewModel must resolve from appModule")
++
++            val trackMapVm = koinApp.koin.get<TrackMapViewModel>()
++            assertNotNull(trackMapVm, "TrackMapViewModel must resolve from appModule")
++
++            val standingsVm = koinApp.koin.get<StandingsViewModel>()
++            assertNotNull(standingsVm, "StandingsViewModel must resolve from appModule")
++        } finally {
++            koinApp.close()
++        }
++    }
++
++    @Test
++    fun `mainActivity extends ComponentActivity`() {
++        assertTrue(
++            androidx.activity.ComponentActivity::class.java.isAssignableFrom(MainActivity::class.java),
++            "MainActivity must inherit from ComponentActivity"
++        )
++    }
++}
+diff --git a/gradlew.bat b/gradlew.bat
+index dcc363f..4250637 100644
+--- a/gradlew.bat
++++ b/gradlew.bat
+@@ -18,15 +18,16 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
+   "$composeJars = (Get-ChildItem (Join-Path $tmp 'compose_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
+   "$lifeJars = (Get-ChildItem (Join-Path $tmp 'lifecycle_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
+   "$coilJars = (Get-ChildItem (Join-Path $tmp 'coil_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
++  "$navJars = (Get-ChildItem (Join-Path $tmp 'nav_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
+   "$coroutines = 'C:\Program Files\Android\Android Studio\plugins\Kotlin\kotlinc\lib\kotlinx-coroutines-core-jvm.jar'; " ^
+   "$kotlinStdlib = 'C:\Program Files\Android\Android Studio\plugins\Kotlin\kotlinc\lib\kotlin-stdlib.jar'; " ^
+   "$kotlinReflect = 'C:\Program Files\Android\Android Studio\plugins\Kotlin\kotlinc\lib\kotlin-reflect.jar'; " ^
+   "$serialCore = 'C:\Program Files\Android\Android Studio\lib\intellij.libraries.kotlinx.serialization.core.jar'; " ^
+   "$serialJson = 'C:\Program Files\Android\Android Studio\lib\intellij.libraries.kotlinx.serialization.json.jar'; " ^
+-  "$cp = ('{0};{1};{2};{3};{4};{5};{6};{7};{8};{9};{10};{11};{12};{13}' -f $androidJar,$coreJar,$roomJars,$testJars,$ktorJars,$koinJars,$composeJars,$lifeJars,$coilJars,$coroutines,$kotlinStdlib,$kotlinReflect,$serialCore,$serialJson); " ^
+-  "$runCp = ((Join-Path $tmp 'all-project-task12.jar') + ';' + $cp); " ^
+-  "$finalCp = ((Join-Path $tmp 'full-runner-task12.jar') + ';' + $runCp); " ^
+-  "& 'C:\Program Files\Android\Android Studio\jbr\bin\java.exe' '-Dnet.bytebuddy.experimental=true' '-XX:+EnableDynamicAgentLoading' -cp $finalCp test.AllProjectTestsRunnerTask12Kt"
++  "$cp = ('{0};{1};{2};{3};{4};{5};{6};{7};{8};{9};{10};{11};{12};{13};{14}' -f $androidJar,$coreJar,$roomJars,$testJars,$ktorJars,$koinJars,$composeJars,$lifeJars,$coilJars,$navJars,$coroutines,$kotlinStdlib,$kotlinReflect,$serialCore,$serialJson); " ^
++  "$runCp = ((Join-Path $tmp 'all-project-task13.jar') + ';' + $cp); " ^
++  "$finalCp = ((Join-Path $tmp 'full-runner-task13.jar') + ';' + $runCp); " ^
++  "& 'C:\Program Files\Android\Android Studio\jbr\bin\java.exe' '-Dnet.bytebuddy.experimental=true' '-XX:+EnableDynamicAgentLoading' -cp $finalCp test.AllProjectTestsRunnerTask13Kt"
+ 
+ if %ERRORLEVEL% NEQ 0 (
+   echo BUILD FAILED

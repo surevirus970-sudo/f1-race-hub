@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import com.f1racehub.app.core.time.DateTimeFormatterUtil
 import com.f1racehub.app.presentation.components.CountdownTimerCard
 import com.f1racehub.app.presentation.theme.*
+import java.time.Instant
 
 @Composable
 fun DashboardScreen(viewModel: DashboardViewModel) {
@@ -52,10 +53,16 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
                 }
             }
 
-            gp.sessions.firstOrNull()?.let { nextSession ->
+            val upcomingSession = remember(gp.sessions) {
+                gp.sessions.firstOrNull {
+                    it.startTime.toInstant().isAfter(Instant.now())
+                } ?: gp.sessions.firstOrNull()
+            }
+
+            upcomingSession?.let { session ->
                 CountdownTimerCard(
-                    targetTime = nextSession.startTime.toInstant(),
-                    sessionName = nextSession.type.name,
+                    targetTime = session.startTime.toInstant(),
+                    sessionName = session.type.name,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
             }
@@ -67,7 +74,10 @@ fun DashboardScreen(viewModel: DashboardViewModel) {
                 modifier = Modifier.padding(vertical = 8.dp)
             )
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
                 items(gp.sessions, key = { it.id }) { session ->
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

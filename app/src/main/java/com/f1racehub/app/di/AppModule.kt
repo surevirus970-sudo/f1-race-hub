@@ -6,7 +6,9 @@ import com.f1racehub.app.data.local.F1Database
 import com.f1racehub.app.data.remote.F1ApiClient
 import com.f1racehub.app.data.repository.RaceRepositoryImpl
 import com.f1racehub.app.domain.repository.RaceRepository
+import com.f1racehub.app.presentation.screens.dashboard.DashboardViewModel
 import com.f1racehub.app.presentation.screens.standings.StandingsViewModel
+import com.f1racehub.app.presentation.screens.timing.LiveTimingViewModel
 import com.f1racehub.app.presentation.screens.trackmap.TrackMapViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -18,6 +20,8 @@ import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val presentationModule = module {
+    viewModel { DashboardViewModel(get(), get()) }
+    viewModel { LiveTimingViewModel(get()) }
     viewModel { TrackMapViewModel(getOrNull()) }
     viewModel { StandingsViewModel() }
 }

@@ -33,3 +33,5 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
   - Task 9: important (deferred to Task 13): Dynamic upcoming session in countdown, add weight(1f) to LazyColumn
 - Task 10: complete (commits cf3ec45..77e0877, fix round 1/5 addressed, review clean)
 - Task 11: complete (commits 77e0877..db6e4cc, fix round 1/5 addressed, review clean)
+- Task 12: complete (commits db6e4cc..23b96d8, review clean)
+  - Task 12: minor (incorporated): ContentScale.Crop in AsyncImage and contentPadding in LazyColumns

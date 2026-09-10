@@ -18,15 +18,16 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -Command ^
   "$composeJars = (Get-ChildItem (Join-Path $tmp 'compose_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
   "$lifeJars = (Get-ChildItem (Join-Path $tmp 'lifecycle_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
   "$coilJars = (Get-ChildItem (Join-Path $tmp 'coil_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
+  "$navJars = (Get-ChildItem (Join-Path $tmp 'nav_libs\*.jar') | Select-Object -ExpandProperty FullName) -join ';'; " ^
   "$coroutines = 'C:\Program Files\Android\Android Studio\plugins\Kotlin\kotlinc\lib\kotlinx-coroutines-core-jvm.jar'; " ^
   "$kotlinStdlib = 'C:\Program Files\Android\Android Studio\plugins\Kotlin\kotlinc\lib\kotlin-stdlib.jar'; " ^
   "$kotlinReflect = 'C:\Program Files\Android\Android Studio\plugins\Kotlin\kotlinc\lib\kotlin-reflect.jar'; " ^
   "$serialCore = 'C:\Program Files\Android\Android Studio\lib\intellij.libraries.kotlinx.serialization.core.jar'; " ^
   "$serialJson = 'C:\Program Files\Android\Android Studio\lib\intellij.libraries.kotlinx.serialization.json.jar'; " ^
-  "$cp = ('{0};{1};{2};{3};{4};{5};{6};{7};{8};{9};{10};{11};{12};{13}' -f $androidJar,$coreJar,$roomJars,$testJars,$ktorJars,$koinJars,$composeJars,$lifeJars,$coilJars,$coroutines,$kotlinStdlib,$kotlinReflect,$serialCore,$serialJson); " ^
-  "$runCp = ((Join-Path $tmp 'all-project-task12.jar') + ';' + $cp); " ^
-  "$finalCp = ((Join-Path $tmp 'full-runner-task12.jar') + ';' + $runCp); " ^
-  "& 'C:\Program Files\Android\Android Studio\jbr\bin\java.exe' '-Dnet.bytebuddy.experimental=true' '-XX:+EnableDynamicAgentLoading' -cp $finalCp test.AllProjectTestsRunnerTask12Kt"
+  "$cp = ('{0};{1};{2};{3};{4};{5};{6};{7};{8};{9};{10};{11};{12};{13};{14}' -f $androidJar,$coreJar,$roomJars,$testJars,$ktorJars,$koinJars,$composeJars,$lifeJars,$coilJars,$navJars,$coroutines,$kotlinStdlib,$kotlinReflect,$serialCore,$serialJson); " ^
+  "$runCp = ((Join-Path $tmp 'all-project-task13.jar') + ';' + $cp); " ^
+  "$finalCp = ((Join-Path $tmp 'full-runner-task13.jar') + ';' + $runCp); " ^
+  "& 'C:\Program Files\Android\Android Studio\jbr\bin\java.exe' '-Dnet.bytebuddy.experimental=true' '-XX:+EnableDynamicAgentLoading' -cp $finalCp test.AllProjectTestsRunnerTask13Kt"
 
 if %ERRORLEVEL% NEQ 0 (
   echo BUILD FAILED
