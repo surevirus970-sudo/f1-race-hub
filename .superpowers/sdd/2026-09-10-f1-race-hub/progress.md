@@ -35,3 +35,5 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
 - Task 11: complete (commits 77e0877..db6e4cc, fix round 1/5 addressed, review clean)
 - Task 12: complete (commits db6e4cc..23b96d8, review clean)
   - Task 12: minor (incorporated): ContentScale.Crop in AsyncImage and contentPadding in LazyColumns
+- Task 13: complete (commits 23b96d8..1805e2d, review clean)
+  - Task 13: minor (incorporated): Import Instant and remember memoization for upcomingSession
