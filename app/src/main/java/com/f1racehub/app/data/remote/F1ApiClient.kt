@@ -27,4 +27,10 @@ class F1ApiClient(
             parameter("session_key", sessionKey)
         }.body()
     }
+
+    suspend fun fetchStints(sessionKey: String): List<OpenF1StintDto> {
+        return httpClient.get("$openF1BaseUrl/stints") {
+            parameter("session_key", sessionKey)
+        }.body()
+    }
 }

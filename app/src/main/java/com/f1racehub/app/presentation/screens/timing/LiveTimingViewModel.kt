@@ -60,7 +60,7 @@ class LiveTimingViewModel(
                         DriverTimingRow(9, "ALO", 14, "#229971", "+18.450", "HARD", 25),
                         DriverTimingRow(10, "TSU", 22, "#6692FF", "+24.110", "MEDIUM", 15)
                     )
-                    _state.update { it.copy(rows = timingList, isLive = true, flagStatus = "GREEN") }
+                    _state.update { it.copy(rows = timingList, isLive = true) }
                 }
                 delay(3000)
             }

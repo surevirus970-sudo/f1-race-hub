@@ -308,4 +308,51 @@ class F1ApiClientTest {
         assertEquals("SOFT", stintWithoutAge.compound)
         assertEquals(0, stintWithoutAge.tyreAgeAtStart)
     }
+
+    @Test
+    fun `fetchStints should query session_key and deserialize stint list`() = runBlocking {
+        val sampleJson = """
+        [
+            {
+                "driver_number": 1,
+                "stint_number": 1,
+                "compound": "MEDIUM",
+                "tyre_age_at_start": 0
+            },
+            {
+                "driver_number": 16,
+                "stint_number": 2,
+                "compound": "HARD",
+                "tyre_age_at_start": 18
+            }
+        ]
+        """.trimIndent()
+
+        var capturedSessionKey: String? = null
+        val mockEngine = MockEngine { request ->
+            assertEquals("/v1/stints", request.url.encodedPath)
+            capturedSessionKey = request.url.parameters["session_key"]
+            respond(
+                content = sampleJson,
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json")
+            )
+        }
+
+        val httpClient = HttpClient(mockEngine) {
+            install(ContentNegotiation) { json(jsonConfig) }
+        }
+
+        val client = F1ApiClient(httpClient)
+        val stints = client.fetchStints("9158")
+
+        assertEquals("9158", capturedSessionKey)
+        assertEquals(2, stints.size)
+        assertEquals(1, stints[0].driverNumber)
+        assertEquals("MEDIUM", stints[0].compound)
+        assertEquals(0, stints[0].tyreAgeAtStart)
+        assertEquals(16, stints[1].driverNumber)
+        assertEquals("HARD", stints[1].compound)
+        assertEquals(18, stints[1].tyreAgeAtStart)
+    }
 }

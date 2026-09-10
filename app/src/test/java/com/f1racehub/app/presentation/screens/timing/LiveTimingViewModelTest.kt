@@ -155,4 +155,17 @@ class LiveTimingViewModelTest {
 
         viewModel.stopPollingTiming()
     }
+
+    @Test
+    fun `startPollingTiming preserves externally updated flagStatus`() = runTest(testDispatcher) {
+        val viewModel = LiveTimingViewModel(apiClient, shouldPoll = false)
+        viewModel.updateFlag("YELLOW")
+        assertEquals("YELLOW", viewModel.state.value.flagStatus)
+
+        viewModel.startPollingTiming()
+        testScheduler.runCurrent()
+
+        assertEquals("YELLOW", viewModel.state.value.flagStatus, "flagStatus should remain YELLOW after polling run")
+        viewModel.stopPollingTiming()
+    }
 }

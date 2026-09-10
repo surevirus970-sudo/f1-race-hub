@@ -15,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.f1racehub.app.presentation.components.F1PirelliTyreBadge
+import com.f1racehub.app.presentation.components.RaceControlBanner
 import com.f1racehub.app.presentation.theme.*
 
 @Composable
@@ -27,34 +28,18 @@ fun LiveTimingScreen(viewModel: LiveTimingViewModel) {
             .background(F1Background)
             .padding(16.dp)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp)
-        ) {
-            Text(text = "LIVE TIMING", color = F1RedPrimary, style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.weight(1f))
-            Box(
-                modifier = Modifier
-                    .background(
-                        when (state.flagStatus) {
-                            "YELLOW" -> FlagYellow
-                            "RED" -> FlagRed
-                            else -> FlagGreen
-                        },
-                        RoundedCornerShape(4.dp)
-                    )
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = state.flagStatus,
-                    color = Color.Black,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp
-                )
-            }
-        }
+        Text(
+            text = "LIVE TIMING",
+            color = F1RedPrimary,
+            style = MaterialTheme.typography.titleLarge,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        RaceControlBanner(
+            status = state.flagStatus,
+            message = "TRACK CLEAR",
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(6.dp),
