@@ -32,7 +32,7 @@ import com.f1racehub.app.presentation.theme.F1RedPrimary
 import com.f1racehub.app.presentation.theme.F1Surface
 import com.f1racehub.app.presentation.theme.F1TextMuted
 import com.f1racehub.app.presentation.theme.F1Theme
-import org.koin.androidx.compose.koinViewModel
+import org.koin.core.context.GlobalContext
 
 class MainActivity : ComponentActivity() {
 
@@ -81,19 +81,19 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.padding(innerPadding)
                     ) {
                         composable(Screen.Dashboard.route) {
-                            val vm: DashboardViewModel = koinViewModel()
+                            val vm: DashboardViewModel = GlobalContext.get().get()
                             DashboardScreen(vm)
                         }
                         composable(Screen.Timing.route) {
-                            val vm: LiveTimingViewModel = koinViewModel()
+                            val vm: LiveTimingViewModel = GlobalContext.get().get()
                             LiveTimingScreen(vm)
                         }
                         composable(Screen.TrackMap.route) {
-                            val vm: TrackMapViewModel = koinViewModel()
+                            val vm: TrackMapViewModel = GlobalContext.get().get()
                             TrackMapScreen(vm)
                         }
                         composable(Screen.Standings.route) {
-                            val vm: StandingsViewModel = koinViewModel()
+                            val vm: StandingsViewModel = GlobalContext.get().get()
                             StandingsScreen(vm)
                         }
                     }
