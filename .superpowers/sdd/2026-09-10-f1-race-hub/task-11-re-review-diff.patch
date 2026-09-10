@@ -1,0 +1,129 @@
+diff --git a/.superpowers/sdd/2026-09-10-f1-race-hub/task-11-report.md b/.superpowers/sdd/2026-09-10-f1-race-hub/task-11-report.md
+index 6ce7a31..030c976 100644
+--- a/.superpowers/sdd/2026-09-10-f1-race-hub/task-11-report.md
++++ b/.superpowers/sdd/2026-09-10-f1-race-hub/task-11-report.md
+@@ -54,4 +54,41 @@ DONE
+ - Регрессия по 77 исходным тестам: 0.
+ 
+ ## Commit
+-- `6cd6344 feat(ui): implement TrackMapScreen with Canvas track rendering and live car markers`
++- `ded6932 feat(ui): implement TrackMapScreen with Canvas track rendering and live car markers`
++
++## Fix Round 1
++
++### Changes Applied
++1. `app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapScreen.kt`:
++   - Геометрия эллипса полотна трассы и стартово-финишной засечки синхронизирована с радиусом орбиты движения болидов (полуоси 0.35 в нормализованном пространстве):
++     - `trackPadX = pad + w * 0.15f`
++     - `trackPadY = pad + h * 0.15f`
++     - `trackW = w * 0.70f`
++     - `trackH = h * 0.70f`
++     - Верхняя засечка старт/финиш смещена на `finishY = trackPadY` для совпадения с вершиной эллипса траектории.
++   - Добавлена горизонтальная прокрутка для блока карточек пилотов:
++     - Подключены модификатор `.horizontalScroll(rememberScrollState())` и распределение элементов `Arrangement.spacedBy(8.dp)`.
++     - Добавлены импорты `androidx.compose.foundation.horizontalScroll` и `androidx.compose.foundation.rememberScrollState`.
++
++2. `app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapViewModel.kt`:
++   - Добавлена аннотация `@Volatile` для мутабельного поля `currentStep`:
++     `@Volatile private var currentStep = 0.0f` для гарантии видимости изменений при межакцидентных обращениях из пула диспетчеров корутин.
++
++### Verification & Test Results
++- Проект скомпилирован с Compose компилятором под Android SDK 35 (API 35/37 platform stubs).
++- Пройден полный тестовый набор проекта: 83 теста в 10 тестовых классах без единой ошибки:
++  - `TrackMapViewModelTest`: 6 passed
++  - `LiveTimingViewModelTest`: 9 passed
++  - `DashboardViewModelTest`: 7 passed
++  - `ColorPaletteTest`: 8 passed
++  - `AppModuleTest`: 12 passed
++  - `SessionAlarmSchedulerTest`: 10 passed
++  - `RaceRepositoryImplTest`: 8 passed
++  - `F1DaoTest`: 12 passed
++  - `F1ApiClientTest`: 6 passed
++  - `DateTimeFormatterUtilTest`: 5 passed
++- Регрессия по 83 тестам: 0.
++
++### Commit
++- `fix(trackmap): align canvas track geometry with car orbit and add legend horizontal scroll`
++
+diff --git a/app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapScreen.kt b/app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapScreen.kt
+index 11d3f15..b256078 100644
+--- a/app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapScreen.kt
++++ b/app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapScreen.kt
+@@ -10,6 +10,7 @@ import androidx.compose.foundation.BorderStroke
+ import androidx.compose.foundation.Canvas
+ import androidx.compose.foundation.background
+ import androidx.compose.foundation.border
++import androidx.compose.foundation.horizontalScroll
+ import androidx.compose.foundation.layout.Arrangement
+ import androidx.compose.foundation.layout.Box
+ import androidx.compose.foundation.layout.Column
+@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.height
+ import androidx.compose.foundation.layout.padding
+ import androidx.compose.foundation.layout.size
+ import androidx.compose.foundation.layout.width
++import androidx.compose.foundation.rememberScrollState
+ import androidx.compose.foundation.shape.CircleShape
+ import androidx.compose.foundation.shape.RoundedCornerShape
+ import androidx.compose.material3.Card
+@@ -130,25 +132,30 @@ fun TrackMapScreen(viewModel: TrackMapViewModel) {
+                     val h = size.height - 2 * pad
+ 
+                     if (w > 0 && h > 0) {
++                        val trackPadX = pad + w * 0.15f
++                        val trackPadY = pad + h * 0.15f
++                        val trackW = w * 0.70f
++                        val trackH = h * 0.70f
++
+                         // Asphalt track surface
+                         drawOval(
+                             color = Color(0xFF23232C),
+-                            topLeft = Offset(pad, pad),
+-                            size = Size(w, h),
++                            topLeft = Offset(trackPadX, trackPadY),
++                            size = Size(trackW, trackH),
+                             style = Stroke(width = 16.dp.toPx())
+                         )
+ 
+                         // Racing line accent
+                         drawOval(
+                             color = Color(0xFF3F3F4E),
+-                            topLeft = Offset(pad, pad),
+-                            size = Size(w, h),
++                            topLeft = Offset(trackPadX, trackPadY),
++                            size = Size(trackW, trackH),
+                             style = Stroke(width = 2.dp.toPx())
+                         )
+ 
+                         // Start / finish sector line at apex
+                         val finishX = pad + w * 0.5f
+-                        val finishY = pad
++                        val finishY = trackPadY
+                         drawLine(
+                             color = Color.White,
+                             start = Offset(finishX, finishY - 8.dp.toPx()),
+@@ -211,8 +218,10 @@ fun TrackMapScreen(viewModel: TrackMapViewModel) {
+                 )
+                 Spacer(modifier = Modifier.height(8.dp))
+                 Row(
+-                    modifier = Modifier.fillMaxWidth(),
+-                    horizontalArrangement = Arrangement.SpaceBetween,
++                    modifier = Modifier
++                        .fillMaxWidth()
++                        .horizontalScroll(rememberScrollState()),
++                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                     verticalAlignment = Alignment.CenterVertically
+                 ) {
+                     state.cars.forEach { car ->
+diff --git a/app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapViewModel.kt b/app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapViewModel.kt
+index 5088e7c..42323ad 100644
+--- a/app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapViewModel.kt
++++ b/app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapViewModel.kt
+@@ -44,7 +44,7 @@ class TrackMapViewModel(
+     val state: StateFlow<TrackMapUiState> = _state.asStateFlow()
+ 
+     private var simulationJob: Job? = null
+-    private var currentStep = 0.0f
++    @Volatile private var currentStep = 0.0f
+ 
+     init {
+         if (shouldSimulate) {
