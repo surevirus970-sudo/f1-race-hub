@@ -44,7 +44,7 @@ class TrackMapViewModel(
     val state: StateFlow<TrackMapUiState> = _state.asStateFlow()
 
     private var simulationJob: Job? = null
-    private var currentStep = 0.0f
+    @Volatile private var currentStep = 0.0f
 
     init {
         if (shouldSimulate) {

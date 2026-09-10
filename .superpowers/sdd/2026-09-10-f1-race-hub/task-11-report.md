@@ -54,4 +54,41 @@ DONE
 - Регрессия по 77 исходным тестам: 0.
 
 ## Commit
-- `6cd6344 feat(ui): implement TrackMapScreen with Canvas track rendering and live car markers`
+- `ded6932 feat(ui): implement TrackMapScreen with Canvas track rendering and live car markers`
+
+## Fix Round 1
+
+### Changes Applied
+1. `app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapScreen.kt`:
+   - Геометрия эллипса полотна трассы и стартово-финишной засечки синхронизирована с радиусом орбиты движения болидов (полуоси 0.35 в нормализованном пространстве):
+     - `trackPadX = pad + w * 0.15f`
+     - `trackPadY = pad + h * 0.15f`
+     - `trackW = w * 0.70f`
+     - `trackH = h * 0.70f`
+     - Верхняя засечка старт/финиш смещена на `finishY = trackPadY` для совпадения с вершиной эллипса траектории.
+   - Добавлена горизонтальная прокрутка для блока карточек пилотов:
+     - Подключены модификатор `.horizontalScroll(rememberScrollState())` и распределение элементов `Arrangement.spacedBy(8.dp)`.
+     - Добавлены импорты `androidx.compose.foundation.horizontalScroll` и `androidx.compose.foundation.rememberScrollState`.
+
+2. `app/src/main/java/com/f1racehub/app/presentation/screens/trackmap/TrackMapViewModel.kt`:
+   - Добавлена аннотация `@Volatile` для мутабельного поля `currentStep`:
+     `@Volatile private var currentStep = 0.0f` для гарантии видимости изменений при межакцидентных обращениях из пула диспетчеров корутин.
+
+### Verification & Test Results
+- Проект скомпилирован с Compose компилятором под Android SDK 35 (API 35/37 platform stubs).
+- Пройден полный тестовый набор проекта: 83 теста в 10 тестовых классах без единой ошибки:
+  - `TrackMapViewModelTest`: 6 passed
+  - `LiveTimingViewModelTest`: 9 passed
+  - `DashboardViewModelTest`: 7 passed
+  - `ColorPaletteTest`: 8 passed
+  - `AppModuleTest`: 12 passed
+  - `SessionAlarmSchedulerTest`: 10 passed
+  - `RaceRepositoryImplTest`: 8 passed
+  - `F1DaoTest`: 12 passed
+  - `F1ApiClientTest`: 6 passed
+  - `DateTimeFormatterUtilTest`: 5 passed
+- Регрессия по 83 тестам: 0.
+
+### Commit
+- `fix(trackmap): align canvas track geometry with car orbit and add legend horizontal scroll`
+

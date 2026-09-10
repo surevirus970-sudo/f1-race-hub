@@ -10,6 +10,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -130,25 +132,30 @@ fun TrackMapScreen(viewModel: TrackMapViewModel) {
                     val h = size.height - 2 * pad
 
                     if (w > 0 && h > 0) {
+                        val trackPadX = pad + w * 0.15f
+                        val trackPadY = pad + h * 0.15f
+                        val trackW = w * 0.70f
+                        val trackH = h * 0.70f
+
                         // Asphalt track surface
                         drawOval(
                             color = Color(0xFF23232C),
-                            topLeft = Offset(pad, pad),
-                            size = Size(w, h),
+                            topLeft = Offset(trackPadX, trackPadY),
+                            size = Size(trackW, trackH),
                             style = Stroke(width = 16.dp.toPx())
                         )
 
                         // Racing line accent
                         drawOval(
                             color = Color(0xFF3F3F4E),
-                            topLeft = Offset(pad, pad),
-                            size = Size(w, h),
+                            topLeft = Offset(trackPadX, trackPadY),
+                            size = Size(trackW, trackH),
                             style = Stroke(width = 2.dp.toPx())
                         )
 
                         // Start / finish sector line at apex
                         val finishX = pad + w * 0.5f
-                        val finishY = pad
+                        val finishY = trackPadY
                         drawLine(
                             color = Color.White,
                             start = Offset(finishX, finishY - 8.dp.toPx()),
@@ -211,8 +218,10 @@ fun TrackMapScreen(viewModel: TrackMapViewModel) {
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     state.cars.forEach { car ->
