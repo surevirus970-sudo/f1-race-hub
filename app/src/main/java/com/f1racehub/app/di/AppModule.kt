@@ -1,4 +1,4 @@
-﻿package com.f1racehub.app.di
+package com.f1racehub.app.di
 
 import androidx.room.Room
 import com.f1racehub.app.core.alarms.SessionAlarmScheduler
@@ -6,15 +6,23 @@ import com.f1racehub.app.data.local.F1Database
 import com.f1racehub.app.data.remote.F1ApiClient
 import com.f1racehub.app.data.repository.RaceRepositoryImpl
 import com.f1racehub.app.domain.repository.RaceRepository
-import io.ktor.client.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.serialization.kotlinx.json.*
+import com.f1racehub.app.presentation.screens.trackmap.TrackMapViewModel
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.android.ext.koin.androidContext
+import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
+val presentationModule = module {
+    viewModel { TrackMapViewModel(getOrNull()) }
+}
+
 val appModule = module {
+    includes(presentationModule)
+
     single {
         HttpClient(CIO) {
             install(ContentNegotiation) {
