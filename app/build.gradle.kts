@@ -70,6 +70,7 @@ dependencies {
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testImplementation(libs.mockk)
+    testImplementation(libs.ktor.client.mock)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
 }

@@ -15,4 +15,6 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
 ## Task Progress
 - Task 1: complete (commits 8037206..04a1987, review clean)
   - Task 1: minor (deferred): Add KSP plugin for room-compiler during Task 4
+- Task 2: complete (commits 04a1987..da08ed3, review clean)
+  - Task 2: minor (deferred): Cache DateTimeFormatter instance and allow optional Locale override
 
