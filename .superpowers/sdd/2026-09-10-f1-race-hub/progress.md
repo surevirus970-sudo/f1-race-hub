@@ -29,4 +29,6 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
   - Task 7: minor (deferred): Replace star imports in AppModule.kt
 - Task 8: complete (commits b9e23a7..47e3e84, review clean)
   - Task 8: minor (deferred): Add "INTER" alias in tyre badge, use Locale.US in timer format
+- Task 9: complete (commits 47e3e84..cf3ec45, review clean)
+  - Task 9: important (deferred to Task 13): Dynamic upcoming session in countdown, add weight(1f) to LazyColumn
 
