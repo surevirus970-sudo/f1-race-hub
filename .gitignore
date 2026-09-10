@@ -11,3 +11,4 @@
 Task
 *.apk
 *.jks
+*.idsig
