@@ -17,4 +17,8 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
   - Task 1: minor (deferred): Add KSP plugin for room-compiler during Task 4
 - Task 2: complete (commits 04a1987..da08ed3, review clean)
   - Task 2: minor (deferred): Cache DateTimeFormatter instance and allow optional Locale override
+- Task 3: complete (commits da08ed3..347bfb9, review clean)
+  - Task 3: minor (deferred): Add fetchStints to F1ApiClient during Task 10, add useJUnitPlatform()
+- Task 4: complete (commits 347bfb9..HEAD, review clean)
+  - Task 4: minor (deferred): None
 
