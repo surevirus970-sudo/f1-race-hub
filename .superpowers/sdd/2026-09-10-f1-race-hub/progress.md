@@ -21,6 +21,7 @@ Pre-flight scan: 0 conflicts detected. Plan verified against spec.
   - Task 3: minor (deferred): Add fetchStints to F1ApiClient during Task 10, add useJUnitPlatform()
 - Task 4: complete (commits 347bfb9..b5be09f, review clean)
   - Task 4: important (incorporated into Task 5): Preserve isAlarmSet state across schedule refreshes
-- Task 5: complete (commits b5be09f..HEAD, review clean)
-  - Task 5: minor (deferred): None
+- Task 5: complete (commits b5be09f..aadffad, review clean)
+  - Task 5: minor (deferred): Rethrow CancellationException in refreshSchedule, wrap upsert in @Transaction
+- Task 6: complete (review clean)
 
