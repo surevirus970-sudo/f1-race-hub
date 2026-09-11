@@ -601,7 +601,7 @@
               <span class="session-tag">FP1</span>
               <div class="session-content">
                 <div class="session-name">Практика 1 (FP1)</div>
-                <div class="session-time" data-utc="2024-08-30T11:30:00Z">30 авг., 14:30</div>
+                <div class="session-time" data-utc="2024-08-30T11:30:00Z">пт, 30 авг., 14:30</div>
               </div>
             </div>
             <button class="alarm-btn" data-session-id="fp1" aria-label="Уведомление: Практика 1 (FP1)">🔕</button>
@@ -611,7 +611,7 @@
               <span class="session-tag">FP2</span>
               <div class="session-content">
                 <div class="session-name">Практика 2 (FP2)</div>
-                <div class="session-time" data-utc="2024-08-30T15:00:00Z">30 авг., 18:00</div>
+                <div class="session-time" data-utc="2024-08-30T15:00:00Z">пт, 30 авг., 18:00</div>
               </div>
             </div>
             <button class="alarm-btn" data-session-id="fp2" aria-label="Уведомление: Практика 2 (FP2)">🔕</button>
@@ -621,7 +621,7 @@
               <span class="session-tag">FP3</span>
               <div class="session-content">
                 <div class="session-name">Практика 3 (FP3)</div>
-                <div class="session-time" data-utc="2024-08-31T10:30:00Z">31 авг., 13:30</div>
+                <div class="session-time" data-utc="2024-08-31T10:30:00Z">сб, 31 авг., 13:30</div>
               </div>
             </div>
             <button class="alarm-btn" data-session-id="fp3" aria-label="Уведомление: Практика 3 (FP3)">🔕</button>
@@ -631,7 +631,7 @@
               <span class="session-tag">Q</span>
               <div class="session-content">
                 <div class="session-name">Квалификация</div>
-                <div class="session-time" data-utc="2024-08-31T14:00:00Z">31 авг., 17:00</div>
+                <div class="session-time" data-utc="2024-08-31T14:00:00Z">сб, 31 авг., 17:00</div>
               </div>
             </div>
             <button class="alarm-btn" data-session-id="quali" aria-label="Уведомление: Квалификация">🔕</button>
@@ -641,7 +641,7 @@
               <span class="session-tag gp-tag">GP</span>
               <div class="session-content">
                 <div class="session-name">Гонка</div>
-                <div class="session-time" data-utc="2024-09-01T13:00:00Z">1 сент., 16:00</div>
+                <div class="session-time" data-utc="2024-09-01T13:00:00Z">вс, 1 сент., 16:00</div>
               </div>
             </div>
             <button class="alarm-btn" data-session-id="race" aria-label="Уведомление: Гонка">🔕</button>
@@ -930,6 +930,8 @@
       }
     };
 
+    window.Store = Store;
+
     /**
      * Determines active session for countdown timer calculation.
      */
@@ -1057,17 +1059,18 @@
      */
     function initDashboardEvents() {
       const container = document.getElementById('dashboardSessionsContainer');
-      if (container) {
-        container.addEventListener('click', (e) => {
-          const btn = e.target.closest('.alarm-btn');
-          if (btn) {
-            const sessionId = btn.getAttribute('data-session-id');
-            if (sessionId) {
-              toggleSessionAlarm(sessionId);
-            }
+      if (!container || container.dataset.eventsBound) return;
+      container.dataset.eventsBound = 'true';
+
+      container.addEventListener('click', (e) => {
+        const btn = e.target.closest('.alarm-btn');
+        if (btn) {
+          const sessionId = btn.getAttribute('data-session-id');
+          if (sessionId) {
+            toggleSessionAlarm(sessionId);
           }
-        });
-      }
+        }
+      });
     }
 
     /**
@@ -1106,20 +1109,24 @@
       Store.notify();
     }
 
-    // Router event subscriptions
-    window.addEventListener('hashchange', updateRoute);
-    window.addEventListener('DOMContentLoaded', () => {
+    /**
+     * Primary application initialization routine.
+     */
+    function bootstrapApp() {
       updateRoute();
       renderSessions();
       initCountdownEngine();
       initDashboardEvents();
-    });
+    }
 
-    // Initial subsystem bootstrap
-    updateRoute();
-    renderSessions();
-    initCountdownEngine();
-    initDashboardEvents();
+    // Router event subscriptions
+    window.addEventListener('hashchange', updateRoute);
+
+    if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', bootstrapApp);
+    } else {
+      bootstrapApp();
+    }
   </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 /**
  * Official F1 2024 Tyre Compound Color Tokens (Hex)
@@ -562,35 +563,120 @@ function testDashboardCountdownAndSessions(htmlFilePath = path.join(__dirname, '
   assert(/f1_session_alarms/i.test(html), 'Missing localStorage key "f1_session_alarms" in script');
   assert(/Intl\.DateTimeFormat/i.test(html), 'Missing Intl.DateTimeFormat session localized formatting');
 
-  // 3. Alarm toggle persistence simulation
+  // 3. Direct execution of production alarm toggle and click delegation logic via Node vm
+  const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/i);
+  assert(scriptMatch, 'Missing <script> block in web/index.html');
+  const scriptCode = scriptMatch[1];
+
   const mockStorage = {};
   const mockLocalStorage = {
-    getItem: (key) => mockStorage[key] || null,
-    setItem: (key, val) => { mockStorage[key] = String(val); }
+    getItem: (key) => (Object.prototype.hasOwnProperty.call(mockStorage, key) ? mockStorage[key] : null),
+    setItem: (key, val) => { mockStorage[key] = String(val); },
+    removeItem: (key) => { delete mockStorage[key]; }
   };
 
-  function simulateToggleAlarm(sessionId, state, storage) {
-    const key = 'f1_session_alarms';
-    const raw = storage.getItem(key);
-    const alarms = raw ? JSON.parse(raw) : (state.alarms || {});
-    alarms[sessionId] = !alarms[sessionId];
-    state.alarms = alarms;
-    storage.setItem(key, JSON.stringify(alarms));
-    return alarms;
-  }
+  const registeredListeners = {};
+  const mockContainer = {
+    dataset: {},
+    addEventListener: (evt, fn) => {
+      registeredListeners[evt] = registeredListeners[evt] || [];
+      registeredListeners[evt].push(fn);
+    }
+  };
 
-  const testState = { alarms: {} };
-  simulateToggleAlarm('race', testState, mockLocalStorage);
-  assert.strictEqual(testState.alarms.race, true, 'Alarm for race must toggle to true');
-  assert.strictEqual(JSON.parse(mockLocalStorage.getItem('f1_session_alarms')).race, true, 'LocalStorage must store race: true');
+  const mockDomElements = {
+    dashboardSessionsContainer: mockContainer,
+    sessionsList: { innerHTML: '' },
+    countDays: { textContent: '' },
+    countHours: { textContent: '' },
+    countMins: { textContent: '' },
+    countSecs: { textContent: '' },
+    countdownSessionLabel: { textContent: '' },
+    dashGpTitle: { textContent: '' },
+    dashGpCircuit: { textContent: '' }
+  };
 
-  simulateToggleAlarm('fp1', testState, mockLocalStorage);
-  assert.strictEqual(testState.alarms.fp1, true, 'Alarm for fp1 must toggle to true');
-  assert.strictEqual(testState.alarms.race, true, 'Alarm for race must remain true');
+  const sandbox = {
+    console,
+    Date,
+    Math,
+    String,
+    Number,
+    Boolean,
+    TypeError,
+    Set,
+    Intl,
+    localStorage: mockLocalStorage,
+    window: {
+      location: { hash: '#dashboard' },
+      addEventListener: () => {}
+    },
+    document: {
+      readyState: 'complete',
+      getElementById: (id) => mockDomElements[id] || null,
+      querySelectorAll: () => [],
+      addEventListener: () => {}
+    },
+    Notification: {
+      requestPermission: () => Promise.resolve('granted')
+    },
+    setInterval: () => 1,
+    clearInterval: () => {}
+  };
 
-  simulateToggleAlarm('race', testState, mockLocalStorage);
-  assert.strictEqual(testState.alarms.race, false, 'Alarm for race must toggle back to false');
-  assert.strictEqual(JSON.parse(mockLocalStorage.getItem('f1_session_alarms')).race, false, 'LocalStorage must store race: false');
+  vm.createContext(sandbox);
+  vm.runInContext(scriptCode, sandbox);
+
+  const Store = sandbox.Store || sandbox.window.Store;
+  assert(Store && Store.state, 'Store must be initialized with state in sandbox context');
+
+  // Assert idempotency guard in initDashboardEvents
+  assert.strictEqual(mockContainer.dataset.eventsBound, 'true', 'initDashboardEvents must set container.dataset.eventsBound');
+  assert(registeredListeners.click && registeredListeners.click.length === 1, 'Exactly one click listener should be registered on sessions container');
+
+  // Verify secondary invocation does not duplicate listener
+  sandbox.initDashboardEvents();
+  assert.strictEqual(registeredListeners.click.length, 1, 'Calling initDashboardEvents again must not attach duplicate listener');
+
+  // Assert production toggleSessionAlarm logic
+  sandbox.toggleSessionAlarm('race');
+  assert.strictEqual(Store.state.alarms.race, true, 'Production toggleSessionAlarm must set race to true in Store');
+  assert.strictEqual(JSON.parse(mockStorage['f1_session_alarms']).race, true, 'Production toggleSessionAlarm must serialize state to f1_session_alarms');
+
+  sandbox.toggleSessionAlarm('fp1');
+  assert.strictEqual(Store.state.alarms.fp1, true, 'Production toggleSessionAlarm must set fp1 to true in Store');
+  assert.strictEqual(Store.state.alarms.race, true, 'Race alarm must remain true');
+
+  sandbox.toggleSessionAlarm('race');
+  assert.strictEqual(Store.state.alarms.race, false, 'Production toggleSessionAlarm must invert race to false in Store');
+  assert.strictEqual(JSON.parse(mockStorage['f1_session_alarms']).race, false, 'Production toggleSessionAlarm must serialize inverted state');
+
+  // Assert production click event delegation handling
+  const clickHandler = registeredListeners.click[0];
+  assert(typeof clickHandler === 'function', 'Registered click handler must be a callable function');
+
+  const mockClickEvent = {
+    target: {
+      closest: (sel) => {
+        if (sel === '.alarm-btn') {
+          return {
+            getAttribute: (attr) => (attr === 'data-session-id' ? 'quali' : null)
+          };
+        }
+        return null;
+      }
+    }
+  };
+
+  clickHandler(mockClickEvent);
+  assert.strictEqual(Store.state.alarms.quali, true, 'Clicking .alarm-btn must toggle alarm in Store via production delegation');
+  assert.strictEqual(JSON.parse(mockStorage['f1_session_alarms']).quali, true, 'Clicking .alarm-btn must persist alarm to LocalStorage');
+
+  // Assert loadStoredAlarms restores persistence from storage
+  const restored = sandbox.loadStoredAlarms();
+  assert.strictEqual(restored.quali, true, 'loadStoredAlarms must restore quali alarm');
+  assert.strictEqual(restored.fp1, true, 'loadStoredAlarms must restore fp1 alarm');
+  assert.strictEqual(restored.race, false, 'loadStoredAlarms must restore race alarm as false');
 }
 
 /**
