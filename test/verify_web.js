@@ -1609,9 +1609,313 @@ function testStandingsTabsAndData(htmlFilePath = path.join(__dirname, '../web/in
 }
 
 /**
+ * Suite 9: Validates dual-mode offline-first background API synchronization,
+ * CORS/network failure resilience, AbortSignal timeout handling, and GitHub Pages mirror parity.
+ */
+async function testOfflineFirstAndSyncLogic() {
+  const rootPath = path.resolve(__dirname, '..', 'index.html');
+  const webPath = path.resolve(__dirname, '..', 'web', 'index.html');
+
+  // --- 1. Root index.html GitHub Pages Mirror Parity ---
+  assert(fs.existsSync(rootPath), 'Root index.html must exist for GitHub Pages deployment');
+  assert(fs.existsSync(webPath), 'web/index.html must exist');
+
+  const rootHtml = fs.readFileSync(rootPath, 'utf8');
+  const webHtml = fs.readFileSync(webPath, 'utf8');
+
+  assert.strictEqual(rootHtml, webHtml, 'Root index.html must be identical to web/index.html');
+  assert(rootHtml.length > 50000, 'Root index.html must contain full application source code');
+  assert(rootHtml.includes('<!DOCTYPE html>'), 'Root index.html must have valid HTML5 doctype');
+  assert(rootHtml.includes('id="networkStatusBadge"'), 'Must include #networkStatusBadge element');
+  assert(rootHtml.includes('● OFFLINE (CACHED)'), 'Must include default offline cached status badge text');
+
+  // Assert zero external scripts and stylesheets (pure standalone requirement)
+  assert(!/<script[^>]+src=/i.test(rootHtml), 'Forbidden external <script src=...> tags detected; application must be 100% standalone');
+  assert(!/<link[^>]+rel=["']stylesheet["']/i.test(rootHtml), 'Forbidden external <link rel="stylesheet"> tags detected; all styles must be embedded');
+
+  // --- 2. Static Code Verification ---
+  assert(rootHtml.includes('syncLiveApiData'), 'Script must define syncLiveApiData function');
+  assert(rootHtml.includes('https://api.jolpica.com/ergast/f1/current.json'), 'Must query Ergast/Jolpica current season endpoint');
+  assert(rootHtml.includes('https://api.openf1.org/v1/intervals?session_key=latest'), 'Must query OpenF1 live intervals endpoint');
+  assert(rootHtml.includes('AbortSignal.timeout(3000)'), 'Must configure 3000ms AbortSignal timeout');
+
+  // Extract script code for VM execution
+  const scriptMatch = webHtml.match(/<script>([\s\S]*?)<\/script>/i);
+  assert(scriptMatch, 'Script block must be present in web/index.html');
+  const scriptCode = scriptMatch[1];
+
+  function createMockElement(id = '', initialClasses = '') {
+    const classes = new Set(initialClasses.split(' ').filter(Boolean));
+    const attributes = {};
+    const listeners = {};
+    return {
+      id,
+      get className() { return Array.from(classes).join(' '); },
+      set className(val) {
+        classes.clear();
+        (val || '').split(' ').filter(Boolean).forEach(c => classes.add(c));
+      },
+      classList: {
+        add: (...names) => names.forEach(n => classes.add(n)),
+        remove: (...names) => names.forEach(n => classes.delete(n)),
+        contains: (n) => classes.has(n),
+        toggle: (n) => (classes.has(n) ? classes.delete(n) : classes.add(n))
+      },
+      dataset: {},
+      innerHTML: '',
+      textContent: '',
+      style: {},
+      setAttribute: (k, v) => { attributes[k] = String(v); },
+      getAttribute: (k) => attributes[k] || null,
+      hasAttribute: (k) => k in attributes,
+      removeAttribute: (k) => { delete attributes[k]; },
+      addEventListener: (evt, fn) => {
+        listeners[evt] = listeners[evt] || [];
+        listeners[evt].push(fn);
+      },
+      dispatchEvent: (evt) => {
+        (listeners[evt.type] || []).forEach(fn => fn(evt));
+      },
+      querySelector: () => null,
+      querySelectorAll: () => []
+    };
+  }
+
+  function setupVmEnvironment(customFetch = undefined) {
+    const badgeEl = createMockElement('networkStatusBadge', 'status-badge');
+    badgeEl.textContent = '● OFFLINE (CACHED)';
+
+    const domElements = {
+      networkStatusBadge: badgeEl,
+      dashGpTitle: createMockElement('dashGpTitle'),
+      dashGpCircuit: createMockElement('dashGpCircuit'),
+      dashboardHeroContainer: createMockElement('dashboardHeroContainer'),
+      dashboardSessionsContainer: createMockElement('dashboardSessionsContainer'),
+      sessionsList: createMockElement('sessionsList'),
+      countDays: createMockElement('countDays'),
+      countHours: createMockElement('countHours'),
+      countMins: createMockElement('countMins'),
+      countSecs: createMockElement('countSecs'),
+      countdownSessionLabel: createMockElement('countdownSessionLabel'),
+      timingBannerContainer: createMockElement('timingBannerContainer'),
+      raceControlBanner: createMockElement('raceControlBanner'),
+      raceControlStatusText: createMockElement('raceControlStatusText'),
+      timingTableContainer: createMockElement('timingTableContainer'),
+      timingTableBody: createMockElement('timingTableBody'),
+      trackCanvas: createMockElement('trackCanvas'),
+      trackMapContainer: createMockElement('trackMapContainer'),
+      trackToolbar: createMockElement('trackToolbar'),
+      trackLegendContainer: createMockElement('trackLegendContainer'),
+      simPlayPauseBtn: createMockElement('simPlayPauseBtn'),
+      simSpeedBtn: createMockElement('simSpeedBtn'),
+      simResetBtn: createMockElement('simResetBtn'),
+      tabDriversBtn: createMockElement('tabDriversBtn'),
+      tabConstructorsBtn: createMockElement('tabConstructorsBtn'),
+      standingsDriversContainer: createMockElement('standingsDriversContainer'),
+      standingsConstructorsContainer: createMockElement('standingsConstructorsContainer'),
+      standingsDriversBody: createMockElement('standingsDriversBody'),
+      standingsConstructorsBody: createMockElement('standingsConstructorsBody'),
+      standingsContainer: createMockElement('standingsContainer')
+    };
+
+    const sandbox = {
+      console,
+      Date,
+      Math,
+      String,
+      Number,
+      Boolean,
+      parseFloat,
+      parseInt,
+      TypeError,
+      Error,
+      Set,
+      Array,
+      Intl,
+      Promise,
+      AbortSignal: globalThis.AbortSignal,
+      fetch: customFetch,
+      localStorage: {
+        getItem: () => null,
+        setItem: () => {},
+        removeItem: () => {}
+      },
+      window: {
+        location: { hash: '#dashboard' },
+        addEventListener: () => {}
+      },
+      document: {
+        readyState: 'complete',
+        getElementById: (id) => domElements[id] || null,
+        querySelectorAll: () => [],
+        addEventListener: () => {}
+      },
+      Notification: {
+        requestPermission: () => Promise.resolve('granted')
+      },
+      setInterval: () => 1,
+      clearInterval: () => {}
+    };
+
+    vm.createContext(sandbox);
+    vm.runInContext(scriptCode, sandbox);
+
+    const Store = sandbox.Store || sandbox.window.Store;
+    return { sandbox, Store, badgeEl };
+  }
+
+  // --- 3. Case A: Network / CORS Failure (Graceful Offline Fallback) ---
+  {
+    const mockFailingFetch = (url) => Promise.reject(new TypeError(`NetworkError: Failed to fetch from ${url} (CORS blocked)`));
+    const { sandbox, Store, badgeEl } = setupVmEnvironment(mockFailingFetch);
+
+    assert(typeof sandbox.syncLiveApiData === 'function', 'syncLiveApiData must be available on window');
+
+    let notified = false;
+    Store.subscribe(() => { notified = true; });
+
+    const syncResult = await sandbox.syncLiveApiData();
+    assert.strictEqual(syncResult.success, false, 'Sync must report failure on network error');
+    assert.strictEqual(syncResult.mode, 'cached', 'Sync must fallback to cached mode on network error');
+    assert.strictEqual(Store.state.networkStatus, 'cached', 'Store.state.networkStatus must remain cached');
+
+    // Verify Monza 2024 embedded cache is preserved intact
+    assert.strictEqual(Store.state.nextGrandPrix.circuit, 'Autodromo Nazionale Monza', 'Cache circuit preserved');
+    assert.strictEqual(Store.state.timing.length, 22, 'Timing grid 22 drivers preserved');
+    assert.strictEqual(Store.state.timing[0].code, 'LEC', 'P1 leader LEC preserved');
+
+    // Verify badge text and styling
+    assert.strictEqual(badgeEl.textContent, '● OFFLINE (CACHED)', 'Badge text must be ● OFFLINE (CACHED)');
+    assert(!badgeEl.classList.contains('live-sync'), 'Badge must not have live-sync class on offline fallback');
+  }
+
+  // --- 4. Case B: Full Live Sync Success (Jolpica & OpenF1) ---
+  {
+    const mockJolpicaPayload = {
+      MRData: {
+        RaceTable: {
+          season: '2024',
+          Races: [{ round: '17', raceName: 'Azerbaijan Grand Prix', Circuit: { circuitName: 'Baku City Circuit' } }]
+        }
+      }
+    };
+    const mockOpenF1Payload = [
+      { driver_number: 16, gap_to_leader: 0 },
+      { driver_number: 81, gap_to_leader: 2.664 }
+    ];
+
+    const mockSuccessFetch = (url) => {
+      if (url.includes('jolpica')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(mockJolpicaPayload)
+        });
+      }
+      if (url.includes('openf1')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve(mockOpenF1Payload)
+        });
+      }
+      return Promise.reject(new Error('Unknown URL'));
+    };
+
+    const { sandbox, Store, badgeEl } = setupVmEnvironment(mockSuccessFetch);
+
+    let notifyCallCount = 0;
+    Store.subscribe(() => { notifyCallCount += 1; });
+
+    const syncResult = await sandbox.syncLiveApiData();
+    assert.strictEqual(syncResult.success, true, 'Sync must succeed when APIs respond 200');
+    assert.strictEqual(syncResult.mode, 'live', 'Sync mode must be live');
+    assert.strictEqual(Store.state.networkStatus, 'live', 'Store.state.networkStatus must be "live"');
+    assert.deepStrictEqual(Store.state.liveJolpica, mockJolpicaPayload, 'Store must store Jolpica live payload');
+    assert.deepStrictEqual(Store.state.liveOpenF1, mockOpenF1Payload, 'Store must store OpenF1 live payload');
+    assert(notifyCallCount >= 1, 'Store.notify() must be invoked on live sync');
+
+    // Verify badge update to LIVE SYNC with green accent
+    assert.strictEqual(badgeEl.textContent, '● LIVE SYNC', 'Badge text must update to ● LIVE SYNC');
+    assert(badgeEl.classList.contains('live-sync'), 'Badge must have .live-sync class');
+    assert.strictEqual(badgeEl.style.color, '#00D084', 'Badge text color must be Pirelli green token #00D084');
+  }
+
+  // --- 5. Case C: Partial Live Sync (Jolpica succeeds, OpenF1 fails) ---
+  {
+    const mockPartialFetch = (url) => {
+      if (url.includes('jolpica')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve({ MRData: { RaceTable: { season: '2024', Races: [] } } })
+        });
+      }
+      return Promise.reject(new TypeError('OpenF1 CORS restriction blocked'));
+    };
+
+    const { sandbox, Store, badgeEl } = setupVmEnvironment(mockPartialFetch);
+    const syncResult = await sandbox.syncLiveApiData();
+
+    assert.strictEqual(syncResult.success, true, 'Partial sync must succeed if at least one API responds');
+    assert.strictEqual(Store.state.networkStatus, 'live', 'Network status must be live on partial success');
+    assert.strictEqual(badgeEl.textContent, '● LIVE SYNC', 'Badge must display ● LIVE SYNC on partial success');
+    assert(badgeEl.classList.contains('live-sync'), 'Badge must have live-sync class on partial success');
+  }
+
+  // --- 6. Case D: Partial Live Sync (OpenF1 succeeds, Jolpica fails) ---
+  {
+    const mockPartialFetch2 = (url) => {
+      if (url.includes('openf1')) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () => Promise.resolve([{ driver_number: 44, interval: 0.5 }])
+        });
+      }
+      return Promise.reject(new TypeError('Jolpica network failure'));
+    };
+
+    const { sandbox, Store, badgeEl } = setupVmEnvironment(mockPartialFetch2);
+    const syncResult = await sandbox.syncLiveApiData();
+
+    assert.strictEqual(syncResult.success, true, 'Partial sync must succeed if OpenF1 responds');
+    assert.strictEqual(Store.state.networkStatus, 'live', 'Network status must be live');
+    assert.strictEqual(badgeEl.textContent, '● LIVE SYNC');
+  }
+
+  // --- 7. Case E: Timeout Abort Simulation ---
+  {
+    const mockTimeoutFetch = () => {
+      const abortError = new Error('The operation was aborted due to timeout');
+      abortError.name = 'AbortError';
+      return Promise.reject(abortError);
+    };
+
+    const { sandbox, Store, badgeEl } = setupVmEnvironment(mockTimeoutFetch);
+    const syncResult = await sandbox.syncLiveApiData();
+
+    assert.strictEqual(syncResult.success, false, 'Sync must handle AbortError cleanly');
+    assert.strictEqual(syncResult.mode, 'cached', 'Mode must fall back to cached');
+    assert.strictEqual(badgeEl.textContent, '● OFFLINE (CACHED)');
+    assert(!badgeEl.classList.contains('live-sync'));
+  }
+
+  // --- 8. Case F: Fetch Not Available (Offline Environment) ---
+  {
+    const { sandbox, Store, badgeEl } = setupVmEnvironment(undefined);
+    const syncResult = await sandbox.syncLiveApiData();
+
+    assert.strictEqual(syncResult.success, false, 'Sync must handle absence of fetch gracefully');
+    assert.strictEqual(syncResult.mode, 'cached');
+    assert.strictEqual(badgeEl.textContent, '● OFFLINE (CACHED)');
+  }
+}
+
+/**
  * Main test runner executing all active test suites.
  */
-function runAllTests() {
+async function runAllTests() {
   const startTime = Date.now();
   console.log('[TEST] Starting F1 Race Hub verification test suites...\n');
 
@@ -1639,17 +1943,18 @@ function runAllTests() {
   testStandingsTabsAndData();
   console.log('  PASS: testStandingsTabsAndData (segmented tabs, 22 drivers, 10 constructors, podium accents, descending points verified)');
 
+  await testOfflineFirstAndSyncLogic();
+  console.log('  PASS: testOfflineFirstAndSyncLogic (background sync, offline fallback, CORS resilience, and root index.html mirror verified)');
+
   const durationMs = Date.now() - startTime;
-  console.log(`\n[SUCCESS] All 8 test suites passed cleanly in ${durationMs}ms.`);
+  console.log(`\n[SUCCESS] All 9 test suites passed cleanly in ${durationMs}ms.`);
 }
 
 if (require.main === module) {
-  try {
-    runAllTests();
-  } catch (error) {
+  runAllTests().catch((error) => {
     console.error('\n[FAIL] Test assertion failed:', error.message);
     process.exit(1);
-  }
+  });
 }
 
 module.exports = {
@@ -1665,5 +1970,6 @@ module.exports = {
   testTimingTower22Drivers,
   testTrackMapCanvasAndKinematics,
   testStandingsTabsAndData,
+  testOfflineFirstAndSyncLogic,
   runAllTests
 };
