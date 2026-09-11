@@ -490,6 +490,298 @@
       color: var(--f1-red-primary);
     }
 
+    /* Race Control Flag Banner */
+    .race-control-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background-color: var(--f1-surface);
+      border: 1px solid var(--f1-surface-border);
+      border-left: 5px solid var(--flag-green);
+      margin-bottom: 16px;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .race-control-banner.flag-green {
+      border-left-color: var(--flag-green);
+      background: linear-gradient(90deg, rgba(0, 208, 132, 0.12) 0%, var(--f1-surface) 100%);
+    }
+
+    .race-control-banner.flag-yellow {
+      border-left-color: var(--flag-yellow);
+      background: linear-gradient(90deg, rgba(255, 184, 0, 0.12) 0%, var(--f1-surface) 100%);
+    }
+
+    .race-control-banner.flag-red {
+      border-left-color: var(--flag-red);
+      background: linear-gradient(90deg, rgba(225, 6, 0, 0.16) 0%, var(--f1-surface) 100%);
+    }
+
+    .race-control-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--f1-text-white);
+    }
+
+    .flag-indicator-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      background-color: var(--flag-green);
+      box-shadow: 0 0 8px var(--flag-green);
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .race-control-banner.flag-green .flag-indicator-dot {
+      background-color: var(--flag-green);
+      box-shadow: 0 0 8px var(--flag-green);
+    }
+
+    .race-control-banner.flag-yellow .flag-indicator-dot {
+      background-color: var(--flag-yellow);
+      box-shadow: 0 0 8px var(--flag-yellow);
+    }
+
+    .race-control-banner.flag-red .flag-indicator-dot {
+      background-color: var(--flag-red);
+      box-shadow: 0 0 8px var(--flag-red);
+    }
+
+    .flag-selector-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .flag-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--f1-text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .flag-btn:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      color: var(--f1-text-white);
+    }
+
+    .flag-btn[data-flag="GREEN"].active {
+      background-color: rgba(0, 208, 132, 0.2);
+      border-color: var(--flag-green);
+      color: var(--flag-green);
+    }
+
+    .flag-btn[data-flag="YELLOW"].active {
+      background-color: rgba(255, 184, 0, 0.2);
+      border-color: var(--flag-yellow);
+      color: var(--flag-yellow);
+    }
+
+    .flag-btn[data-flag="RED"].active {
+      background-color: rgba(225, 6, 0, 0.2);
+      border-color: var(--flag-red);
+      color: var(--flag-red);
+    }
+
+    /* Timing Leaderboard Table */
+    .timing-table-wrapper {
+      background-color: var(--f1-surface);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 8px;
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: calc(100vh - 210px);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .timing-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .timing-table th {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background-color: #17171E;
+      color: var(--f1-text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      padding: 10px 14px;
+      border-bottom: 2px solid var(--f1-surface-border);
+    }
+
+    .timing-table td {
+      padding: 8px 14px;
+      border-bottom: 1px solid rgba(44, 44, 54, 0.6);
+      vertical-align: middle;
+    }
+
+    .timing-row {
+      transition: background-color 0.12s ease;
+    }
+
+    .timing-row:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+
+    .pos-cell {
+      width: 44px;
+    }
+
+    .pos-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--f1-text-white);
+      background-color: rgba(255, 255, 255, 0.07);
+    }
+
+    .timing-row[data-position="1"] .pos-pill {
+      background-color: rgba(255, 215, 0, 0.2);
+      color: #FFD700;
+      border: 1px solid rgba(255, 215, 0, 0.4);
+    }
+
+    .driver-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .team-color-bar {
+      width: 4px;
+      height: 26px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .driver-info {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .driver-number {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--f1-text-muted);
+      min-width: 18px;
+    }
+
+    .driver-code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: var(--f1-text-white);
+    }
+
+    .driver-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--f1-text-muted);
+    }
+
+    .gap-cell {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--f1-text-white);
+    }
+
+    .gap-leader {
+      color: #FFD700;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .tyre-badge-container {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tyre-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 900;
+      color: #000000;
+      border: 1px solid rgba(0, 0, 0, 0.25);
+      flex-shrink: 0;
+    }
+
+    .tyre-badge.tyre-S {
+      background-color: var(--tyre-soft);
+      color: #FFFFFF;
+    }
+
+    .tyre-badge.tyre-M {
+      background-color: var(--tyre-medium);
+      color: #000000;
+    }
+
+    .tyre-badge.tyre-H {
+      background-color: var(--tyre-hard);
+      color: #000000;
+    }
+
+    .tyre-badge.tyre-I {
+      background-color: var(--tyre-inter);
+      color: #FFFFFF;
+    }
+
+    .tyre-badge.tyre-W {
+      background-color: var(--tyre-wet);
+      color: #FFFFFF;
+    }
+
+    .tyre-laps {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--f1-text-muted);
+    }
+
     /* Responsive media queries */
     @media (min-width: 768px) {
       .desktop-tabs {
@@ -657,10 +949,473 @@
         <p class="screen-subtitle">Позиции пелотона P1–P22 и состояние трассы</p>
       </header>
       <div id="timingBannerContainer">
-        <!-- Race control flags mount point -->
+        <div id="raceControlBanner" class="race-control-banner flag-green" role="region" aria-label="Статус заезда Race Control">
+          <div class="race-control-status">
+            <span class="flag-indicator-dot" aria-hidden="true"></span>
+            <span id="raceControlStatusText" class="race-control-text">RACE CONTROL: GREEN FLAG - TRACK CLEAR</span>
+          </div>
+          <div class="flag-selector-group" role="group" aria-label="Режимы флагов">
+            <button type="button" class="flag-btn active" data-flag="GREEN" aria-label="Зеленый флаг">🟢 GREEN</button>
+            <button type="button" class="flag-btn" data-flag="YELLOW" aria-label="Желтый флаг">🟡 YELLOW</button>
+            <button type="button" class="flag-btn" data-flag="RED" aria-label="Красный флаг">🔴 RED</button>
+          </div>
+        </div>
       </div>
       <div id="timingTableContainer">
-        <!-- 22-driver leaderboard table mount point -->
+        <div class="timing-table-wrapper" role="region" aria-label="Таблица тайминга пелотона" tabindex="0">
+          <table class="timing-table">
+            <thead>
+              <tr>
+                <th scope="col" class="th-pos">ПОЗ</th>
+                <th scope="col" class="th-driver">КОМАНДА / ПИЛОТ</th>
+                <th scope="col" class="th-gap">ОТРЫВ</th>
+                <th scope="col" class="th-tyre">ШИНА</th>
+              </tr>
+            </thead>
+            <tbody id="timingTableBody">
+              <tr class="timing-row" data-position="1">
+                <td class="pos-cell"><span class="pos-pill">1</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #E80020;" title="Ferrari"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">16</span>
+                      <span class="driver-code">LEC</span>
+                      <span class="driver-name">Charles Leclerc</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span class="gap-leader">LEADER</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L38</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="2">
+                <td class="pos-cell"><span class="pos-pill">2</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #FF8000;" title="McLaren"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">81</span>
+                      <span class="driver-code">PIA</span>
+                      <span class="driver-name">Oscar Piastri</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+2.664s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L14</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="3">
+                <td class="pos-cell"><span class="pos-pill">3</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #FF8000;" title="McLaren"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">4</span>
+                      <span class="driver-code">NOR</span>
+                      <span class="driver-name">Lando Norris</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+6.153s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L20</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="4">
+                <td class="pos-cell"><span class="pos-pill">4</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #E80020;" title="Ferrari"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">55</span>
+                      <span class="driver-code">SAI</span>
+                      <span class="driver-name">Carlos Sainz</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+15.621s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L33</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="5">
+                <td class="pos-cell"><span class="pos-pill">5</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #27F4D2;" title="Mercedes"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">44</span>
+                      <span class="driver-code">HAM</span>
+                      <span class="driver-name">Lewis Hamilton</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+22.820s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L16</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="6">
+                <td class="pos-cell"><span class="pos-pill">6</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #3671C6;" title="Red Bull Racing"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">1</span>
+                      <span class="driver-code">VER</span>
+                      <span class="driver-name">Max Verstappen</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+37.932s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-M" title="Compound M">M</span>
+                    <span class="tyre-laps">L11</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="7">
+                <td class="pos-cell"><span class="pos-pill">7</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #27F4D2;" title="Mercedes"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">63</span>
+                      <span class="driver-code">RUS</span>
+                      <span class="driver-name">George Russell</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+39.715s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L20</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="8">
+                <td class="pos-cell"><span class="pos-pill">8</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #3671C6;" title="Red Bull Racing"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">11</span>
+                      <span class="driver-code">PER</span>
+                      <span class="driver-name">Sergio Perez</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+54.148s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-M" title="Compound M">M</span>
+                    <span class="tyre-laps">L17</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="9">
+                <td class="pos-cell"><span class="pos-pill">9</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #64C4FF;" title="Williams"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">23</span>
+                      <span class="driver-code">ALB</span>
+                      <span class="driver-name">Alexander Albon</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+67.456s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L37</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="10">
+                <td class="pos-cell"><span class="pos-pill">10</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #B6BABD;" title="Haas"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">20</span>
+                      <span class="driver-code">MAG</span>
+                      <span class="driver-name">Kevin Magnussen</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+68.302s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L34</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="11">
+                <td class="pos-cell"><span class="pos-pill">11</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #229971;" title="Aston Martin"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">14</span>
+                      <span class="driver-code">ALO</span>
+                      <span class="driver-name">Fernando Alonso</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+68.495s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L21</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="12">
+                <td class="pos-cell"><span class="pos-pill">12</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #64C4FF;" title="Williams"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">43</span>
+                      <span class="driver-code">COL</span>
+                      <span class="driver-name">Franco Colapinto</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+81.308s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L37</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="13">
+                <td class="pos-cell"><span class="pos-pill">13</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #6692FF;" title="RB"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">3</span>
+                      <span class="driver-code">RIC</span>
+                      <span class="driver-name">Daniel Ricciardo</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+93.452s</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L36</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="14">
+                <td class="pos-cell"><span class="pos-pill">14</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #0093CC;" title="Alpine"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">31</span>
+                      <span class="driver-code">OCO</span>
+                      <span class="driver-name">Esteban Ocon</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+1 Lap</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L38</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="15">
+                <td class="pos-cell"><span class="pos-pill">15</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #0093CC;" title="Alpine"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">10</span>
+                      <span class="driver-code">GAS</span>
+                      <span class="driver-name">Pierre Gasly</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+1 Lap</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L38</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="16">
+                <td class="pos-cell"><span class="pos-pill">16</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #52E252;" title="Kick Sauber"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">77</span>
+                      <span class="driver-code">BOT</span>
+                      <span class="driver-name">Valtteri Bottas</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+1 Lap</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L36</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="17">
+                <td class="pos-cell"><span class="pos-pill">17</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #B6BABD;" title="Haas"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">27</span>
+                      <span class="driver-code">HUL</span>
+                      <span class="driver-name">Nico Hulkenberg</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+1 Lap</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L39</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="18">
+                <td class="pos-cell"><span class="pos-pill">18</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #52E252;" title="Kick Sauber"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">24</span>
+                      <span class="driver-code">ZHO</span>
+                      <span class="driver-name">Zhou Guanyu</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+1 Lap</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-H" title="Compound H">H</span>
+                    <span class="tyre-laps">L36</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="19">
+                <td class="pos-cell"><span class="pos-pill">19</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #229971;" title="Aston Martin"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">18</span>
+                      <span class="driver-code">STR</span>
+                      <span class="driver-name">Lance Stroll</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+1 Lap</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-S" title="Compound S">S</span>
+                    <span class="tyre-laps">L6</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="20">
+                <td class="pos-cell"><span class="pos-pill">20</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #E80020;" title="Ferrari"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">38</span>
+                      <span class="driver-code">BEA</span>
+                      <span class="driver-name">Oliver Bearman</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+2 Laps</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-M" title="Compound M">M</span>
+                    <span class="tyre-laps">L24</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="21">
+                <td class="pos-cell"><span class="pos-pill">21</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #64C4FF;" title="Williams"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">2</span>
+                      <span class="driver-code">SAR</span>
+                      <span class="driver-name">Logan Sargeant</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+2 Laps</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-M" title="Compound M">M</span>
+                    <span class="tyre-laps">L22</span>
+                  </div>
+                </td>
+              </tr>
+              <tr class="timing-row" data-position="22">
+                <td class="pos-cell"><span class="pos-pill">22</span></td>
+                <td>
+                  <div class="driver-cell">
+                    <span class="team-color-bar" style="background-color: #6692FF;" title="RB"></span>
+                    <div class="driver-info">
+                      <span class="driver-number">22</span>
+                      <span class="driver-code">TSU</span>
+                      <span class="driver-name">Yuki Tsunoda</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="gap-cell"><span>+45 Laps</span></td>
+                <td class="tyre-cell">
+                  <div class="tyre-badge-container">
+                    <span class="tyre-badge tyre-M" title="Compound M">M</span>
+                    <span class="tyre-laps">L8</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -908,7 +1663,7 @@
         activeTab: 'dashboard',
         nextGrandPrix: F1_DATA_2024.grandPrix,
         sessions: F1_DATA_2024.grandPrix.sessions,
-        timing: F1_DATA_2024.timing,
+        timing: F1_DATA_2024.timing.map(d => ({ ...d })),
         standings: F1_DATA_2024.standings,
         flagStatus: 'GREEN',
         simulationRunning: true,
@@ -1074,6 +1829,163 @@
     }
 
     /**
+     * FIA Race Control status configurations
+     */
+    const FLAG_CONFIGS = {
+      GREEN: {
+        bannerClass: 'flag-green',
+        text: 'RACE CONTROL: GREEN FLAG - TRACK CLEAR'
+      },
+      YELLOW: {
+        bannerClass: 'flag-yellow',
+        text: 'RACE CONTROL: YELLOW FLAG - HAZARD ON TRACK'
+      },
+      RED: {
+        bannerClass: 'flag-red',
+        text: 'RACE CONTROL: RED FLAG - SESSION SUSPENDED'
+      }
+    };
+
+    /**
+     * Updates Race Control status banner and store state.
+     */
+    function setRaceControlFlag(flag) {
+      const config = FLAG_CONFIGS[flag];
+      if (!config) return;
+
+      Store.state.flagStatus = flag;
+
+      const banner = document.getElementById('raceControlBanner');
+      const textEl = document.getElementById('raceControlStatusText');
+      const buttons = document.querySelectorAll('.flag-btn');
+
+      if (banner) {
+        banner.classList.remove('flag-green', 'flag-yellow', 'flag-red');
+        banner.classList.add(config.bannerClass);
+      }
+
+      if (textEl) {
+        textEl.textContent = config.text;
+      }
+
+      if (buttons && buttons.length) {
+        buttons.forEach(btn => {
+          if (btn.getAttribute('data-flag') === flag) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+      }
+
+      Store.notify();
+    }
+
+    /**
+     * Registers delegated click listener for Race Control flag buttons.
+     */
+    function initTimingEvents() {
+      const banner = document.getElementById('raceControlBanner');
+      if (!banner || banner.dataset.eventsBound) return;
+      banner.dataset.eventsBound = 'true';
+
+      banner.addEventListener('click', (e) => {
+        const btn = e.target.closest('.flag-btn');
+        if (btn) {
+          const flag = btn.getAttribute('data-flag');
+          if (flag) {
+            setRaceControlFlag(flag);
+          }
+        }
+      });
+    }
+
+    /**
+     * Renders 22-driver leaderboard table into DOM.
+     */
+    function renderTimingTable() {
+      const tbody = document.getElementById('timingTableBody');
+      if (!tbody) return;
+
+      const drivers = Store.state.timing || [];
+      tbody.innerHTML = drivers.map(driver => {
+        const isLeader = driver.position === 1;
+        const gapContent = isLeader
+          ? '<span class="gap-leader">LEADER</span>'
+          : `<span>${driver.gap}</span>`;
+
+        return `
+          <tr class="timing-row" data-position="${driver.position}">
+            <td class="pos-cell"><span class="pos-pill">${driver.position}</span></td>
+            <td>
+              <div class="driver-cell">
+                <span class="team-color-bar" style="background-color: ${driver.teamColor};" title="${driver.team}"></span>
+                <div class="driver-info">
+                  <span class="driver-number">${driver.number}</span>
+                  <span class="driver-code">${driver.code}</span>
+                  <span class="driver-name">${driver.name}</span>
+                </div>
+              </div>
+            </td>
+            <td class="gap-cell">${gapContent}</td>
+            <td class="tyre-cell">
+              <div class="tyre-badge-container">
+                <span class="tyre-badge tyre-${driver.tyre}" title="Compound ${driver.tyre}">${driver.tyre}</span>
+                <span class="tyre-laps">L${driver.tyreLaps}</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Simulates dynamic gap variations across peloton drivers.
+     */
+    function updateTimingGaps() {
+      if (!Store.state.simulationRunning) return;
+
+      const timing = Store.state.timing;
+      if (!Array.isArray(timing) || timing.length === 0) return;
+
+      timing.forEach(driver => {
+        if (driver.position === 1) {
+          driver.gap = 'LEADER';
+          return;
+        }
+
+        const match = String(driver.gap).match(/^\+([0-9.]+)\s*s?$/i);
+        if (match) {
+          const currentSec = parseFloat(match[1]);
+          if (!Number.isNaN(currentSec)) {
+            const jitter = (Math.random() * 0.100) - 0.050;
+            const updated = Math.max(0.001, currentSec + jitter);
+            driver.gap = `+${updated.toFixed(3)}s`;
+          }
+        }
+      });
+
+      renderTimingTable();
+      Store.notify();
+    }
+
+    let timingSimulationIntervalId = null;
+
+    /**
+     * Initializes 2000ms periodic timing gap simulation ticker.
+     */
+    function initTimingSimulation() {
+      if (timingSimulationIntervalId) {
+        clearInterval(timingSimulationIntervalId);
+      }
+      timingSimulationIntervalId = setInterval(() => {
+        if (Store.state.simulationRunning) {
+          updateTimingGaps();
+        }
+      }, 2000);
+    }
+
+    /**
      * Client-Side Hash Router
      */
     const VALID_ROUTES = ['dashboard', 'timing', 'trackmap', 'standings'];
@@ -1117,6 +2029,9 @@
       renderSessions();
       initCountdownEngine();
       initDashboardEvents();
+      renderTimingTable();
+      initTimingEvents();
+      initTimingSimulation();
     }
 
     // Router event subscriptions

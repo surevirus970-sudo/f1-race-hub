@@ -680,6 +680,285 @@ function testDashboardCountdownAndSessions(htmlFilePath = path.join(__dirname, '
 }
 
 /**
+ * Suite 6: Validates Live Timing Tower screen, 22-driver grid rendering, Pirelli tyre badges,
+ * Race Control flag status transitions, and periodic gap updates.
+ */
+function testTimingTower22Drivers(htmlFilePath = path.join(__dirname, '../web/index.html')) {
+  assert(fs.existsSync(htmlFilePath), `HTML file does not exist: ${htmlFilePath}`);
+  const html = fs.readFileSync(htmlFilePath, 'utf8');
+
+  // --- 1. Static HTML and CSS checks ---
+  // Race control banner checks
+  assert(
+    /<div[^>]+id=["']raceControlBanner["'][^>]+class=["'][^"']*race-control-banner[^"']*flag-green[^"']*["']/i.test(html) ||
+    /<div[^>]+class=["'][^"']*race-control-banner[^"']*flag-green[^"']*["'][^>]+id=["']raceControlBanner["']/i.test(html),
+    'Missing <div id="raceControlBanner" class="race-control-banner flag-green">'
+  );
+
+  assert(
+    /RACE\s+CONTROL:\s*GREEN\s+FLAG\s*-\s*TRACK\s+CLEAR/i.test(html),
+    'Missing default status text "RACE CONTROL: GREEN FLAG - TRACK CLEAR"'
+  );
+
+  assert(/data-flag=["']GREEN["']/i.test(html), 'Missing GREEN flag selector button with data-flag="GREEN"');
+  assert(/data-flag=["']YELLOW["']/i.test(html), 'Missing YELLOW flag selector button with data-flag="YELLOW"');
+  assert(/data-flag=["']RED["']/i.test(html), 'Missing RED flag selector button with data-flag="RED"');
+
+  // Timing table wrapper and sticky header
+  assert(/class=["'][^"']*timing-table-wrapper[^"']*["']/i.test(html), 'Missing .timing-table-wrapper container');
+  assert(
+    /\.timing-table\s+th\s*\{[^}]*position\s*:\s*sticky/i.test(html) ||
+    /th\s*\{[^}]*position\s*:\s*sticky/i.test(html),
+    'Missing sticky header CSS rule for timing table header'
+  );
+
+  // Table column headers
+  assert(/<th[^>]*>[\s\S]*?ПОЗ[\s\S]*?<\/th>/i.test(html), 'Missing table header "ПОЗ"');
+  assert(/<th[^>]*>[\s\S]*?КОМАНДА\s*\/\s*ПИЛОТ[\s\S]*?<\/th>/i.test(html), 'Missing table header "КОМАНДА / ПИЛОТ"');
+  assert(/<th[^>]*>[\s\S]*?ОТРЫВ[\s\S]*?<\/th>/i.test(html), 'Missing table header "ОТРЫВ"');
+  assert(/<th[^>]*>[\s\S]*?ШИНА[\s\S]*?<\/th>/i.test(html), 'Missing table header "ШИНА"');
+
+  // 4px team color bar CSS
+  assert(
+    /\.team-color-bar\s*\{[^}]*width\s*:\s*4px/i.test(html),
+    'Missing CSS specification width: 4px for .team-color-bar'
+  );
+
+  // Pirelli tyre compound styles
+  ['tyre-S', 'tyre-M', 'tyre-H', 'tyre-I', 'tyre-W'].forEach(compoundClass => {
+    assert(html.includes(compoundClass), `Missing tyre badge class "${compoundClass}" in HTML/CSS`);
+  });
+
+  // Table rows in static markup inside #timingTableBody
+  const tableBodyMatch = html.match(/<tbody[^>]*id=["']timingTableBody["'][^>]*>([\s\S]*?)<\/tbody>/i);
+  assert(tableBodyMatch, 'Missing <tbody id="timingTableBody"> in timing table');
+  const rowMatches = tableBodyMatch[1].match(/<tr[^>]*class=["'][^"']*timing-row[^"']*["']/gi) || [];
+  assert.strictEqual(rowMatches.length, 22, `Static HTML timing table must contain exactly 22 timing-row elements, found ${rowMatches.length}`);
+
+  // Leader gap static check
+  assert(/LEADER/i.test(html), 'Static HTML timing table must contain "LEADER" gap for P1');
+
+  // Script logic presence checks
+  assert(/function\s+renderTimingTable/i.test(html), 'Missing renderTimingTable function in script block');
+  assert(/function\s+updateTimingGaps/i.test(html), 'Missing updateTimingGaps function in script block');
+  assert(/function\s+setRaceControlFlag/i.test(html), 'Missing setRaceControlFlag function in script block');
+
+  // --- 2. VM Execution and Production Logic Verification ---
+  const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/i);
+  assert(scriptMatch, 'Missing <script> block in web/index.html');
+  const scriptCode = scriptMatch[1];
+
+  function createMockElement(id = '', initialClasses = '') {
+    const classes = new Set(initialClasses.split(' ').filter(Boolean));
+    const attributes = {};
+    const listeners = {};
+    return {
+      id,
+      get className() {
+        return Array.from(classes).join(' ');
+      },
+      set className(val) {
+        classes.clear();
+        (val || '').split(' ').filter(Boolean).forEach(c => classes.add(c));
+      },
+      classList: {
+        add: (...names) => names.forEach(n => classes.add(n)),
+        remove: (...names) => names.forEach(n => classes.delete(n)),
+        contains: (n) => classes.has(n),
+        toggle: (n) => (classes.has(n) ? classes.delete(n) : classes.add(n))
+      },
+      dataset: {},
+      innerHTML: '',
+      textContent: '',
+      style: {},
+      setAttribute: (k, v) => { attributes[k] = String(v); },
+      getAttribute: (k) => attributes[k] || null,
+      hasAttribute: (k) => k in attributes,
+      removeAttribute: (k) => { delete attributes[k]; },
+      addEventListener: (evt, fn) => {
+        listeners[evt] = listeners[evt] || [];
+        listeners[evt].push(fn);
+      },
+      dispatchEvent: (evt) => {
+        (listeners[evt.type] || []).forEach(fn => fn(evt));
+      },
+      closest: function(sel) {
+        if (sel === '.flag-btn' && classes.has('flag-btn')) return this;
+        if (sel === '.alarm-btn' && classes.has('alarm-btn')) return this;
+        return null;
+      }
+    };
+  }
+
+  const mockBanner = createMockElement('raceControlBanner', 'race-control-banner flag-green');
+  const mockStatusText = createMockElement('raceControlStatusText');
+  mockStatusText.textContent = 'RACE CONTROL: GREEN FLAG - TRACK CLEAR';
+  const mockTableBody = createMockElement('timingTableBody');
+
+  const flagBtns = [
+    createMockElement('', 'flag-btn active'),
+    createMockElement('', 'flag-btn'),
+    createMockElement('', 'flag-btn')
+  ];
+  flagBtns[0].setAttribute('data-flag', 'GREEN');
+  flagBtns[1].setAttribute('data-flag', 'YELLOW');
+  flagBtns[2].setAttribute('data-flag', 'RED');
+
+  const mockDomElements = {
+    raceControlBanner: mockBanner,
+    raceControlStatusText: mockStatusText,
+    timingTableBody: mockTableBody,
+    timingBannerContainer: createMockElement('timingBannerContainer'),
+    timingTableContainer: createMockElement('timingTableContainer'),
+    dashboardSessionsContainer: createMockElement('dashboardSessionsContainer'),
+    sessionsList: createMockElement('sessionsList'),
+    countDays: createMockElement('countDays'),
+    countHours: createMockElement('countHours'),
+    countMins: createMockElement('countMins'),
+    countSecs: createMockElement('countSecs'),
+    countdownSessionLabel: createMockElement('countdownSessionLabel'),
+    dashGpTitle: createMockElement('dashGpTitle'),
+    dashGpCircuit: createMockElement('dashGpCircuit'),
+    networkStatusBadge: createMockElement('networkStatusBadge')
+  };
+
+  const sandbox = {
+    console,
+    Date,
+    Math,
+    String,
+    Number,
+    Boolean,
+    parseFloat,
+    parseInt,
+    TypeError,
+    Set,
+    Array,
+    Intl,
+    localStorage: {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {}
+    },
+    window: {
+      location: { hash: '#timing' },
+      addEventListener: () => {}
+    },
+    document: {
+      readyState: 'complete',
+      getElementById: (id) => mockDomElements[id] || null,
+      querySelectorAll: (sel) => {
+        if (sel === '.flag-btn') return flagBtns;
+        if (sel === '.screen') return [];
+        if (sel === '.nav-item') return [];
+        return [];
+      },
+      addEventListener: () => {}
+    },
+    Notification: {
+      requestPermission: () => Promise.resolve('granted')
+    },
+    setInterval: () => 1,
+    clearInterval: () => {}
+  };
+
+  vm.createContext(sandbox);
+  vm.runInContext(scriptCode, sandbox);
+
+  const Store = sandbox.Store || sandbox.window.Store;
+  assert(Store && Store.state, 'Store must be initialized in VM context');
+
+  // Verify renderTimingTable execution
+  sandbox.renderTimingTable();
+  const renderedHtml = mockTableBody.innerHTML;
+  assert(renderedHtml, 'renderTimingTable must populate timingTableBody.innerHTML');
+
+  const renderedRowMatches = renderedHtml.match(/<tr[^>]*class=["'][^"']*timing-row[^"']*["']/gi) || [];
+  assert.strictEqual(renderedRowMatches.length, 22, `renderTimingTable must render exactly 22 rows, found ${renderedRowMatches.length}`);
+
+  // Assert leader row has gap "LEADER"
+  assert(renderedHtml.includes('LEADER'), 'Timing table must contain "LEADER" for position 1');
+  const firstRowMatch = renderedHtml.match(/<tr[^>]*data-position=["']1["'][\s\S]*?<\/tr>/i);
+  assert(firstRowMatch, 'Timing table must have a row with data-position="1"');
+  assert(/LEADER/i.test(firstRowMatch[0]), 'First row must contain LEADER');
+
+  // Assert all 22 drivers have valid tyre compound codes
+  const validTyres = ['S', 'M', 'H', 'I', 'W'];
+  const tyreBadgeMatches = renderedHtml.match(/class=["'][^"']*tyre-badge[^"']*tyre-([SMHIW])[^"']*["']/g) || [];
+  assert.strictEqual(tyreBadgeMatches.length, 22, `All 22 drivers must have a tyre compound badge, found ${tyreBadgeMatches.length}`);
+
+  // Verify tyre compounds in Store
+  Store.state.timing.forEach((driver, idx) => {
+    assert(validTyres.includes(driver.tyre), `Driver ${idx + 1} (${driver.code}) invalid tyre compound ${driver.tyre}`);
+  });
+
+  // Verify Race Control flag status transitions
+  assert.strictEqual(Store.state.flagStatus, 'GREEN', 'Initial flagStatus must be GREEN');
+  assert(mockBanner.classList.contains('flag-green'), 'Banner must have flag-green initially');
+  assert(mockStatusText.textContent.includes('GREEN FLAG'), 'Banner text must reflect GREEN FLAG');
+
+  // Transition to YELLOW
+  sandbox.setRaceControlFlag('YELLOW');
+  assert.strictEqual(Store.state.flagStatus, 'YELLOW', 'Store.state.flagStatus must be YELLOW');
+  assert(mockBanner.classList.contains('flag-yellow'), 'Banner must have flag-yellow class');
+  assert(!mockBanner.classList.contains('flag-green'), 'Banner must not have flag-green class');
+  assert(!mockBanner.classList.contains('flag-red'), 'Banner must not have flag-red class');
+  assert(mockStatusText.textContent.includes('YELLOW FLAG'), 'Banner text must reflect YELLOW FLAG');
+  assert(flagBtns[1].classList.contains('active'), 'Yellow flag button must have active class');
+  assert(!flagBtns[0].classList.contains('active'), 'Green flag button must not have active class');
+
+  // Transition to RED
+  sandbox.setRaceControlFlag('RED');
+  assert.strictEqual(Store.state.flagStatus, 'RED', 'Store.state.flagStatus must be RED');
+  assert(mockBanner.classList.contains('flag-red'), 'Banner must have flag-red class');
+  assert(!mockBanner.classList.contains('flag-yellow'), 'Banner must not have flag-yellow class');
+  assert(mockStatusText.textContent.includes('RED FLAG'), 'Banner text must reflect RED FLAG');
+  assert(flagBtns[2].classList.contains('active'), 'Red flag button must have active class');
+
+  // Transition back to GREEN
+  sandbox.setRaceControlFlag('GREEN');
+  assert.strictEqual(Store.state.flagStatus, 'GREEN', 'Store.state.flagStatus must be GREEN');
+  assert(mockBanner.classList.contains('flag-green'), 'Banner must have flag-green class');
+  assert(mockStatusText.textContent.includes('GREEN FLAG'), 'Banner text must reflect GREEN FLAG');
+  assert(flagBtns[0].classList.contains('active'), 'Green flag button must have active class');
+
+  // Interactive click event delegation verification
+  sandbox.initTimingEvents();
+  assert.strictEqual(mockBanner.dataset.eventsBound, 'true', 'initTimingEvents must set eventsBound on banner');
+
+  // Simulate clicking yellow button
+  mockBanner.dispatchEvent({
+    type: 'click',
+    target: {
+      closest: (sel) => (sel === '.flag-btn' ? flagBtns[1] : null)
+    }
+  });
+  assert.strictEqual(Store.state.flagStatus, 'YELLOW', 'Clicking yellow button must transition status to YELLOW via delegation');
+  assert(mockBanner.classList.contains('flag-yellow'), 'Banner class must update to flag-yellow after click');
+
+  // Verify updateTimingGaps simulation behavior
+  Store.state.simulationRunning = true;
+  sandbox.updateTimingGaps();
+
+  // Position 1 must always stay LEADER
+  assert.strictEqual(Store.state.timing[0].gap, 'LEADER', 'Leader gap must remain LEADER after gap updates');
+
+  // Other gaps must remain valid strings
+  for (let i = 1; i < Store.state.timing.length; i++) {
+    const gap = Store.state.timing[i].gap;
+    assert(typeof gap === 'string' && gap.startsWith('+'), `Driver P${i + 1} gap must start with "+" (received: ${gap})`);
+  }
+
+  // When simulation is paused, updateTimingGaps should not mutate gaps
+  Store.state.simulationRunning = false;
+  const pausedGaps = Store.state.timing.map(d => d.gap);
+  sandbox.updateTimingGaps();
+  Store.state.timing.forEach((d, idx) => {
+    assert.strictEqual(d.gap, pausedGaps[idx], `Driver P${idx + 1} gap must not mutate when simulation is paused`);
+  });
+}
+
+/**
  * Main test runner executing all active test suites.
  */
 function runAllTests() {
@@ -701,8 +980,11 @@ function runAllTests() {
   testDashboardCountdownAndSessions();
   console.log('  PASS: testDashboardCountdownAndSessions (hero card, 4-box countdown ticker, 5 sessions and alarms verified)');
 
+  testTimingTower22Drivers();
+  console.log('  PASS: testTimingTower22Drivers (22 rows, leader gap, tyre badges, race control flag transitions verified)');
+
   const durationMs = Date.now() - startTime;
-  console.log(`\n[SUCCESS] All 5 test suites passed cleanly in ${durationMs}ms.`);
+  console.log(`\n[SUCCESS] All 6 test suites passed cleanly in ${durationMs}ms.`);
 }
 
 if (require.main === module) {
@@ -724,5 +1006,6 @@ module.exports = {
   testTyreCompoundColorMapping,
   testHtmlStructureAndRouting,
   testDashboardCountdownAndSessions,
+  testTimingTower22Drivers,
   runAllTests
 };
