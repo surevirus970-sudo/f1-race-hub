@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#101014">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="F1 Race Hub — автономный гоночный центр Formula 1: расписание сессий, обратный отсчет, телеметрия пелотона P1-P22, карта трассы и зачет чемпионата.">
+  <title>F1 Race Hub — Formula 1 Standalone Live Center</title>
+
+  <style>
+    :root {
+      --f1-bg: #101014;
+      --f1-surface: #1B1B22;
+      --f1-surface-border: #2C2C36;
+      --f1-red-primary: #E10600;
+      --f1-text-white: #FFFFFF;
+      --f1-text-muted: #8E8E9A;
+
+      /* Pirelli tyre tokens */
+      --tyre-soft: #FF1801;
+      --tyre-medium: #FFD200;
+      --tyre-hard: #FFFFFF;
+      --tyre-inter: #39B54A;
+      --tyre-wet: #00A3E0;
+
+      /* Race control flags */
+      --flag-green: #00D084;
+      --flag-yellow: #FFB800;
+      --flag-red: #E10600;
+
+      /* Layout geometry */
+      --header-height: 56px;
+      --bottom-nav-height: 56px;
+      --content-max-width: 1200px;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "SF Mono", "Roboto Mono", "Segoe UI Mono", Menlo, Consolas, monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      background-color: var(--f1-bg);
+      color: var(--f1-text-white);
+      font-family: var(--font-sans);
+      font-size: 14px;
+      line-height: 1.4;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* Scrollbar aesthetics */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--f1-bg);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--f1-surface-border);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--f1-text-muted);
+    }
+
+    /* Top application header */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--header-height);
+      background-color: var(--f1-surface);
+      border-bottom: 1px solid var(--f1-surface-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-badge {
+      background-color: var(--f1-red-primary);
+      color: #FFFFFF;
+      font-weight: 900;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      font-style: italic;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 16px;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--f1-text-white);
+    }
+
+    /* Desktop header tabs */
+    .desktop-tabs {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+    }
+
+    .desktop-tabs .nav-item {
+      display: inline-flex;
+      align-items: center;
+      height: 100%;
+      padding: 0 16px;
+      color: var(--f1-text-muted);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.3px;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .desktop-tabs .nav-item:hover {
+      color: var(--f1-text-white);
+    }
+
+    .desktop-tabs .nav-item.active {
+      color: var(--f1-text-white);
+      border-bottom-color: var(--f1-red-primary);
+    }
+
+    /* Header status indicator */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      color: var(--f1-text-muted);
+      background-color: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--f1-surface-border);
+      padding: 4px 8px;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+
+    /* Main viewport container */
+    .app-main {
+      width: 100%;
+      max-width: var(--content-max-width);
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 20px);
+    }
+
+    /* Screen display architecture */
+    .screen {
+      display: none;
+    }
+
+    .screen.active-screen {
+      display: block;
+    }
+
+    /* Mobile bottom navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--bottom-nav-height);
+      z-index: 100;
+      background-color: var(--f1-surface);
+      border-top: 1px solid var(--f1-surface-border);
+      display: flex;
+      align-items: stretch;
+      justify-content: space-around;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    .bottom-nav .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--f1-text-muted);
+      text-decoration: none;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      transition: color 0.15s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .bottom-nav .nav-item svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .bottom-nav .nav-item:hover {
+      color: var(--f1-text-white);
+    }
+
+    .bottom-nav .nav-item.active {
+      color: var(--f1-red-primary);
+    }
+
+    /* Section placeholder scaffolding */
+    .screen-header {
+      margin-bottom: 16px;
+    }
+
+    .screen-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      color: var(--f1-text-white);
+    }
+
+    .screen-subtitle {
+      font-size: 13px;
+      color: var(--f1-text-muted);
+      margin-top: 2px;
+    }
+
+    .card {
+      background-color: var(--f1-surface);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    /* Responsive media queries */
+    @media (min-width: 768px) {
+      .desktop-tabs {
+        display: flex;
+      }
+
+      .bottom-nav {
+        display: none;
+      }
+
+      .app-main {
+        padding: 24px;
+        padding-bottom: 40px;
+      }
+
+      .screen-title {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header with Brand, Desktop Tabs, and Status Badge -->
+  <header class="app-header">
+    <a href="#dashboard" class="brand-cluster">
+      <span class="brand-badge">F1</span>
+      <span class="brand-title">Race Hub</span>
+    </a>
+
+    <nav class="desktop-tabs" id="desktopNav" aria-label="Основная навигация">
+      <a href="#dashboard" class="nav-item active" data-route="dashboard">Этап</a>
+      <a href="#timing" class="nav-item" data-route="timing">Тайминг</a>
+      <a href="#trackmap" class="nav-item" data-route="trackmap">Трек</a>
+      <a href="#standings" class="nav-item" data-route="standings">Зачет</a>
+    </nav>
+
+    <div class="header-actions">
+      <span id="networkStatusBadge" class="status-badge">● OFFLINE (CACHED)</span>
+    </div>
+  </header>
+
+  <!-- Main Viewport Sections -->
+  <main class="app-main">
+    <!-- Screen 1: Dashboard -->
+    <section id="screen-dashboard" class="screen active-screen" aria-label="Панель этапа">
+      <header class="screen-header">
+        <h1 class="screen-title" id="dashGpTitle">Гран-при Италии 2024</h1>
+        <p class="screen-subtitle" id="dashGpCircuit">Autodromo Nazionale Monza • Раунд 16</p>
+      </header>
+      <div id="dashboardHeroContainer">
+        <!-- Next session countdown and hero component mount point -->
+      </div>
+      <div id="dashboardSessionsContainer">
+        <!-- 5 weekend sessions timetable mount point -->
+      </div>
+    </section>
+
+    <!-- Screen 2: Live Timing Tower -->
+    <section id="screen-timing" class="screen" aria-label="Тайминг пелотона">
+      <header class="screen-header">
+        <h1 class="screen-title">Телеметрия заезда</h1>
+        <p class="screen-subtitle">Позиции пелотона P1–P22 и состояние трассы</p>
+      </header>
+      <div id="timingBannerContainer">
+        <!-- Race control flags mount point -->
+      </div>
+      <div id="timingTableContainer">
+        <!-- 22-driver leaderboard table mount point -->
+      </div>
+    </section>
+
+    <!-- Screen 3: HiDPI Canvas Track Map -->
+    <section id="screen-trackmap" class="screen" aria-label="Карта трассы">
+      <header class="screen-header">
+        <h1 class="screen-title">Схема автодрома</h1>
+        <p class="screen-subtitle">Интерактивная векторная траектория и положение болидов</p>
+      </header>
+      <div id="trackMapContainer">
+        <!-- Vector canvas and playback controls mount point -->
+      </div>
+    </section>
+
+    <!-- Screen 4: Championship Standings -->
+    <section id="screen-standings" class="screen" aria-label="Зачет чемпионата">
+      <header class="screen-header">
+        <h1 class="screen-title">Турнирная таблица</h1>
+        <p class="screen-subtitle">Сезон 2024: Личный зачет и Кубок конструкторов</p>
+      </header>
+      <div id="standingsContainer">
+        <!-- Drivers & constructors tables mount point -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Mobile Fixed Bottom Navigation Bar -->
+  <nav id="bottomNav" class="bottom-nav" aria-label="Мобильная навигация">
+    <a href="#dashboard" class="nav-item active" data-route="dashboard">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zm-5-7h3v5h-3zm-5 2h3v3H9zm-3 0h2v3H6zm6-8H6V6h6v3z"/>
+      </svg>
+      <span>Этап</span>
+    </a>
+    <a href="#timing" class="nav-item" data-route="timing">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/>
+      </svg>
+      <span>Тайминг</span>
+    </a>
+    <a href="#trackmap" class="nav-item" data-route="trackmap">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+      </svg>
+      <span>Трек</span>
+    </a>
+    <a href="#standings" class="nav-item" data-route="standings">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+      </svg>
+      <span>Зачет</span>
+    </a>
+  </nav>
+
+  <!-- Application Logic & Data Layer -->
+  <script>
+    /**
+     * Official F1 2024 Tyre Compound Color Tokens (Hex)
+     */
+    const TYRE_COLORS = {
+      S: '#FF1801',
+      M: '#FFD200',
+      H: '#FFFFFF',
+      I: '#39B54A',
+      W: '#00A3E0'
+    };
+
+    /**
+     * Reference Dataset: 2024 Formula 1 Italian Grand Prix (Monza, Round 16)
+     */
+    const F1_DATA_2024 = {
+      grandPrix: {
+        name: "FORMULA 1 PIRELLI GRAN PREMIO D'ITALIA 2024",
+        circuit: 'Autodromo Nazionale Monza',
+        country: 'Italy',
+        round: 16,
+        sessions: [
+          { id: 'fp1', name: 'Практика 1 (FP1)', timeUtc: '2024-08-30T11:30:00Z' },
+          { id: 'fp2', name: 'Практика 2 (FP2)', timeUtc: '2024-08-30T15:00:00Z' },
+          { id: 'fp3', name: 'Практика 3 (FP3)', timeUtc: '2024-08-31T10:30:00Z' },
+          { id: 'quali', name: 'Квалификация', timeUtc: '2024-08-31T14:00:00Z' },
+          { id: 'race', name: 'Гонка', timeUtc: '2024-09-01T13:00:00Z' }
+        ]
+      },
+      timing: [
+        { position: 1, code: 'LEC', number: 16, name: 'Charles Leclerc', team: 'Ferrari', teamColor: '#E80020', gap: 'LEADER', tyre: 'H', tyreLaps: 38 },
+        { position: 2, code: 'PIA', number: 81, name: 'Oscar Piastri', team: 'McLaren', teamColor: '#FF8000', gap: '+2.664s', tyre: 'H', tyreLaps: 14 },
+        { position: 3, code: 'NOR', number: 4, name: 'Lando Norris', team: 'McLaren', teamColor: '#FF8000', gap: '+6.153s', tyre: 'H', tyreLaps: 20 },
+        { position: 4, code: 'SAI', number: 55, name: 'Carlos Sainz', team: 'Ferrari', teamColor: '#E80020', gap: '+15.621s', tyre: 'H', tyreLaps: 33 },
+        { position: 5, code: 'HAM', number: 44, name: 'Lewis Hamilton', team: 'Mercedes', teamColor: '#27F4D2', gap: '+22.820s', tyre: 'H', tyreLaps: 16 },
+        { position: 6, code: 'VER', number: 1, name: 'Max Verstappen', team: 'Red Bull Racing', teamColor: '#3671C6', gap: '+37.932s', tyre: 'M', tyreLaps: 11 },
+        { position: 7, code: 'RUS', number: 63, name: 'George Russell', team: 'Mercedes', teamColor: '#27F4D2', gap: '+39.715s', tyre: 'H', tyreLaps: 20 },
+        { position: 8, code: 'PER', number: 11, name: 'Sergio Perez', team: 'Red Bull Racing', teamColor: '#3671C6', gap: '+54.148s', tyre: 'M', tyreLaps: 17 },
+        { position: 9, code: 'ALB', number: 23, name: 'Alexander Albon', team: 'Williams', teamColor: '#64C4FF', gap: '+67.456s', tyre: 'H', tyreLaps: 37 },
+        { position: 10, code: 'MAG', number: 20, name: 'Kevin Magnussen', team: 'Haas', teamColor: '#B6BABD', gap: '+68.302s', tyre: 'H', tyreLaps: 34 },
+        { position: 11, code: 'ALO', number: 14, name: 'Fernando Alonso', team: 'Aston Martin', teamColor: '#229971', gap: '+68.495s', tyre: 'H', tyreLaps: 21 },
+        { position: 12, code: 'COL', number: 43, name: 'Franco Colapinto', team: 'Williams', teamColor: '#64C4FF', gap: '+81.308s', tyre: 'H', tyreLaps: 37 },
+        { position: 13, code: 'RIC', number: 3, name: 'Daniel Ricciardo', team: 'RB', teamColor: '#6692FF', gap: '+93.452s', tyre: 'H', tyreLaps: 36 },
+        { position: 14, code: 'OCO', number: 31, name: 'Esteban Ocon', team: 'Alpine', teamColor: '#0093CC', gap: '+1 Lap', tyre: 'H', tyreLaps: 38 },
+        { position: 15, code: 'GAS', number: 10, name: 'Pierre Gasly', team: 'Alpine', teamColor: '#0093CC', gap: '+1 Lap', tyre: 'H', tyreLaps: 38 },
+        { position: 16, code: 'BOT', number: 77, name: 'Valtteri Bottas', team: 'Kick Sauber', teamColor: '#52E252', gap: '+1 Lap', tyre: 'H', tyreLaps: 36 },
+        { position: 17, code: 'HUL', number: 27, name: 'Nico Hulkenberg', team: 'Haas', teamColor: '#B6BABD', gap: '+1 Lap', tyre: 'H', tyreLaps: 39 },
+        { position: 18, code: 'ZHO', number: 24, name: 'Zhou Guanyu', team: 'Kick Sauber', teamColor: '#52E252', gap: '+1 Lap', tyre: 'H', tyreLaps: 36 },
+        { position: 19, code: 'STR', number: 18, name: 'Lance Stroll', team: 'Aston Martin', teamColor: '#229971', gap: '+1 Lap', tyre: 'S', tyreLaps: 6 },
+        { position: 20, code: 'BEA', number: 38, name: 'Oliver Bearman', team: 'Ferrari', teamColor: '#E80020', gap: '+2 Laps', tyre: 'M', tyreLaps: 24 },
+        { position: 21, code: 'SAR', number: 2, name: 'Logan Sargeant', team: 'Williams', teamColor: '#64C4FF', gap: '+2 Laps', tyre: 'M', tyreLaps: 22 },
+        { position: 22, code: 'TSU', number: 22, name: 'Yuki Tsunoda', team: 'RB', teamColor: '#6692FF', gap: '+45 Laps', tyre: 'M', tyreLaps: 8 }
+      ],
+      standings: {
+        drivers: [
+          { position: 1, code: 'VER', name: 'Max Verstappen', team: 'Red Bull Racing', points: 303, wins: 7 },
+          { position: 2, code: 'NOR', name: 'Lando Norris', team: 'McLaren', points: 241, wins: 2 },
+          { position: 3, code: 'LEC', name: 'Charles Leclerc', team: 'Ferrari', points: 217, wins: 2 },
+          { position: 4, code: 'PIA', name: 'Oscar Piastri', team: 'McLaren', points: 197, wins: 1 },
+          { position: 5, code: 'SAI', name: 'Carlos Sainz', team: 'Ferrari', points: 184, wins: 1 },
+          { position: 6, code: 'HAM', name: 'Lewis Hamilton', team: 'Mercedes', points: 164, wins: 2 },
+          { position: 7, code: 'PER', name: 'Sergio Perez', team: 'Red Bull Racing', points: 143, wins: 0 },
+          { position: 8, code: 'RUS', name: 'George Russell', team: 'Mercedes', points: 128, wins: 1 },
+          { position: 9, code: 'ALO', name: 'Fernando Alonso', team: 'Aston Martin', points: 50, wins: 0 },
+          { position: 10, code: 'STR', name: 'Lance Stroll', team: 'Aston Martin', points: 24, wins: 0 },
+          { position: 11, code: 'HUL', name: 'Nico Hulkenberg', team: 'Haas', points: 22, wins: 0 },
+          { position: 12, code: 'TSU', name: 'Yuki Tsunoda', team: 'RB', points: 22, wins: 0 },
+          { position: 13, code: 'RIC', name: 'Daniel Ricciardo', team: 'RB', points: 12, wins: 0 },
+          { position: 14, code: 'GAS', name: 'Pierre Gasly', team: 'Alpine', points: 8, wins: 0 },
+          { position: 15, code: 'BEA', name: 'Oliver Bearman', team: 'Ferrari', points: 7, wins: 0 },
+          { position: 16, code: 'MAG', name: 'Kevin Magnussen', team: 'Haas', points: 6, wins: 0 },
+          { position: 17, code: 'ALB', name: 'Alexander Albon', team: 'Williams', points: 6, wins: 0 },
+          { position: 18, code: 'OCO', name: 'Esteban Ocon', team: 'Alpine', points: 5, wins: 0 },
+          { position: 19, code: 'ZHO', name: 'Zhou Guanyu', team: 'Kick Sauber', points: 0, wins: 0 },
+          { position: 20, code: 'SAR', name: 'Logan Sargeant', team: 'Williams', points: 0, wins: 0 },
+          { position: 21, code: 'COL', name: 'Franco Colapinto', team: 'Williams', points: 0, wins: 0 },
+          { position: 22, code: 'BOT', name: 'Valtteri Bottas', team: 'Kick Sauber', points: 0, wins: 0 }
+        ],
+        constructors: [
+          { position: 1, name: 'Red Bull Racing', color: '#3671C6', points: 446, wins: 7 },
+          { position: 2, name: 'McLaren', color: '#FF8000', points: 438, wins: 3 },
+          { position: 3, name: 'Ferrari', color: '#E80020', points: 407, wins: 3 },
+          { position: 4, name: 'Mercedes', color: '#27F4D2', points: 292, wins: 3 },
+          { position: 5, name: 'Aston Martin', color: '#229971', points: 74, wins: 0 },
+          { position: 6, name: 'RB', color: '#6692FF', points: 34, wins: 0 },
+          { position: 7, name: 'Haas', color: '#B6BABD', points: 28, wins: 0 },
+          { position: 8, name: 'Alpine', color: '#0093CC', points: 13, wins: 0 },
+          { position: 9, name: 'Williams', color: '#64C4FF', points: 6, wins: 0 },
+          { position: 10, name: 'Kick Sauber', color: '#52E252', points: 0, wins: 0 }
+        ]
+      }
+    };
+
+    /**
+     * Reactive Observer Micro-Store
+     */
+    const Store = {
+      state: {
+        activeTab: 'dashboard',
+        nextGrandPrix: F1_DATA_2024.grandPrix,
+        sessions: F1_DATA_2024.grandPrix.sessions,
+        timing: F1_DATA_2024.timing,
+        standings: F1_DATA_2024.standings,
+        flagStatus: 'GREEN',
+        simulationRunning: true,
+        simulationSpeed: 1,
+        alarms: {}
+      },
+      subscribers: new Set(),
+      subscribe(fn) {
+        this.subscribers.add(fn);
+      },
+      notify() {
+        this.subscribers.forEach(fn => {
+          try {
+            fn(this.state);
+          } catch (err) {
+            console.error('[Store] subscriber exception:', err);
+          }
+        });
+      }
+    };
+
+    /**
+     * Client-Side Hash Router
+     */
+    const VALID_ROUTES = ['dashboard', 'timing', 'trackmap', 'standings'];
+
+    function updateRoute() {
+      const rawHash = (window.location.hash || '').replace(/^#\/?/, '').trim();
+      const targetRoute = VALID_ROUTES.includes(rawHash) ? rawHash : 'dashboard';
+
+      Store.state.activeTab = targetRoute;
+
+      // Update screen visibility
+      const screens = document.querySelectorAll('.screen');
+      screens.forEach(screen => {
+        if (screen.id === `screen-${targetRoute}`) {
+          screen.classList.add('active-screen');
+        } else {
+          screen.classList.remove('active-screen');
+        }
+      });
+
+      // Update navigation item active states across desktop & mobile navs
+      const navLinks = document.querySelectorAll('.nav-item');
+      navLinks.forEach(link => {
+        const routeAttr = link.getAttribute('data-route') || (link.getAttribute('href') || '').replace(/^#/, '');
+        if (routeAttr === targetRoute) {
+          link.classList.add('active');
+        } else {
+          link.classList.remove('active');
+        }
+      });
+
+      // Notify store subscribers of active route transition
+      Store.notify();
+    }
+
+    // Router event subscriptions
+    window.addEventListener('hashchange', updateRoute);
+    window.addEventListener('DOMContentLoaded', updateRoute);
+
+    // Initial route synchronization
+    updateRoute();
+  </script>
+</body>
+</html>

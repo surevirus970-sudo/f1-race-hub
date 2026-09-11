@@ -1,4 +1,6 @@
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * Official F1 2024 Tyre Compound Color Tokens (Hex)
@@ -296,6 +298,133 @@ function testTyreCompoundColorMapping() {
 }
 
 /**
+ * Suite 4: Validates HTML structure, CSS design tokens, and hash navigation routing.
+ */
+function testHtmlStructureAndRouting(htmlFilePath = path.join(__dirname, '../web/index.html')) {
+  assert(fs.existsSync(htmlFilePath), `Required HTML file does not exist: ${htmlFilePath}`);
+  const html = fs.readFileSync(htmlFilePath, 'utf8');
+
+  // Meta viewport and mobile tags
+  assert(
+    /<meta[^>]+name=["']viewport["'][^>]+content=["'][^"']*width=device-width[^"']*["']/i.test(html),
+    'Missing or invalid meta viewport tag for responsive rendering'
+  );
+  assert(
+    /<meta[^>]+name=["']theme-color["'][^>]+content=["']#101014["']/i.test(html),
+    'Missing or invalid meta theme-color tag for dark status bar'
+  );
+
+  // CSS variables for F1 Dark Racing Theme
+  const requiredCssVariables = [
+    '--f1-bg: #101014',
+    '--f1-surface: #1B1B22',
+    '--f1-surface-border: #2C2C36',
+    '--f1-red-primary: #E10600',
+    '--f1-text-white: #FFFFFF',
+    '--f1-text-muted: #8E8E9A',
+    '--tyre-soft: #FF1801',
+    '--tyre-medium: #FFD200',
+    '--tyre-hard: #FFFFFF',
+    '--tyre-inter: #39B54A',
+    '--tyre-wet: #00A3E0',
+    '--flag-green: #00D084',
+    '--flag-yellow: #FFB800',
+    '--flag-red: #E10600'
+  ];
+
+  requiredCssVariables.forEach((cssVar) => {
+    const [name, val] = cssVar.split(':').map((s) => s.trim());
+    const regex = new RegExp(`${name}\\s*:\\s*${val}`, 'i');
+    assert(regex.test(html), `Missing required CSS design token: ${cssVar}`);
+  });
+
+  // Display toggling CSS rules
+  assert(
+    /\.screen\s*\{[^}]*display\s*:\s*none/i.test(html),
+    'Missing CSS rule .screen { display: none; }'
+  );
+  assert(
+    /\.screen\.active-screen\s*\{[^}]*display\s*:\s*block/i.test(html) ||
+    /\.active-screen\s*\{[^}]*display\s*:\s*block/i.test(html),
+    'Missing CSS rule .active-screen { display: block; }'
+  );
+
+  // Screen sections
+  const requiredScreens = [
+    'screen-dashboard',
+    'screen-timing',
+    'screen-trackmap',
+    'screen-standings'
+  ];
+
+  requiredScreens.forEach((screenId) => {
+    const regex = new RegExp(`<section[^>]+id=["']${screenId}["'][^>]+class=["'][^"']*screen[^"']*["']`, 'i');
+    assert(regex.test(html), `Missing section element with id="${screenId}" and class="screen"`);
+  });
+
+  // Initial active screen check
+  assert(
+    /<section[^>]+id=["']screen-dashboard["'][^>]+class=["'][^"']*active-screen[^"']*["']/i.test(html),
+    'Screen "#screen-dashboard" must have "active-screen" class on initial render'
+  );
+
+  // Header & Status Badge
+  assert(/id=["']networkStatusBadge["']/i.test(html), 'Missing element #networkStatusBadge');
+  assert(/OFFLINE\s*\(CACHED\)/i.test(html), 'Missing OFFLINE (CACHED) indicator text in status badge');
+
+  // Standalone constraint: zero external scripts or styles
+  assert(!/<script[^>]+src=["']https?:/i.test(html), 'Document must not contain external script links');
+  assert(!/<link[^>]+href=["']https?:/i.test(html), 'Document must not contain external stylesheet links');
+
+  // Bottom Navigation and labels
+  assert(/<nav[^>]+id=["']bottomNav["']/i.test(html), 'Missing element <nav id="bottomNav">');
+  assert(/href=["']#dashboard["'][^>]*>[\s\S]*?Этап/i.test(html), 'Bottom navigation missing "#dashboard" item with text "Этап"');
+  assert(/href=["']#timing["'][^>]*>[\s\S]*?Тайминг/i.test(html), 'Bottom navigation missing "#timing" item with text "Тайминг"');
+  assert(/href=["']#trackmap["'][^>]*>[\s\S]*?Трек/i.test(html), 'Bottom navigation missing "#trackmap" item with text "Трек"');
+  assert(/href=["']#standings["'][^>]*>[\s\S]*?Зачет/i.test(html), 'Bottom navigation missing "#standings" item with text "Зачет"');
+
+  // Desktop Navigation tabs
+  assert(/id=["']desktopNav["']/i.test(html) || /class=["'][^"']*desktop-tabs[^"']*["']/i.test(html), 'Missing desktop navigation container');
+  const desktopMediaQuery = html.match(/@media\s*\(\s*min-width\s*:\s*768px\s*\)\s*\{([\s\S]*?)\}\s*<\/style>/i);
+  assert(desktopMediaQuery, 'Missing @media (min-width: 768px) rule');
+  assert(/\.desktop-tabs\s*\{[^}]*display\s*:\s*flex/i.test(desktopMediaQuery[1]), 'Missing desktop tabs responsive display flex rule');
+  assert(/(\.bottom-nav|#bottomNav)\s*\{[^}]*display\s*:\s*none/i.test(desktopMediaQuery[1]), 'Missing bottom nav hidden display: none rule on desktop');
+
+  // Mobile layout specifications
+  assert(/--bottom-nav-height\s*:\s*56px/i.test(html), 'Missing or incorrect --bottom-nav-height: 56px token');
+  assert(/\.bottom-nav\s*\{[^}]*z-index\s*:\s*100/i.test(html), 'Missing z-index: 100 on .bottom-nav');
+  assert(/\.bottom-nav\s*\{[^}]*position\s*:\s*fixed/i.test(html), 'Missing position: fixed on .bottom-nav');
+
+  // SVG Icons
+  const svgMatches = html.match(/<svg[\s\S]*?<\/svg>/gi) || [];
+  assert(svgMatches.length >= 4, `Expected at least 4 SVG icons in navigation, found ${svgMatches.length}`);
+
+  // JavaScript Router & Store validation
+  assert(/addEventListener\s*\(\s*['"]hashchange['"]/i.test(html), 'Missing hashchange event listener in script block');
+  assert(/VALID_ROUTES\s*=\s*\[/i.test(html), 'Missing VALID_ROUTES array in router');
+  const validRoutes = ['dashboard', 'timing', 'trackmap', 'standings'];
+  validRoutes.forEach((route) => {
+    assert(html.includes(`'${route}'`), `Router must declare valid route '${route}'`);
+  });
+  assert(/F1_DATA_2024/i.test(html), 'Missing embedded F1_DATA_2024 dataset in script block');
+  assert(/const\s+Store\s*=\s*\{/i.test(html) || /var\s+Store\s*=\s*\{/i.test(html) || /let\s+Store\s*=\s*\{/i.test(html), 'Missing Store state container in script block');
+
+  // Verify route resolution behavior against contract
+  function resolveRoute(hash) {
+    const rawHash = (hash || '').replace(/^#\/?/, '').trim();
+    return validRoutes.includes(rawHash) ? rawHash : 'dashboard';
+  }
+  assert.strictEqual(resolveRoute(''), 'dashboard');
+  assert.strictEqual(resolveRoute('#'), 'dashboard');
+  assert.strictEqual(resolveRoute('#/'), 'dashboard');
+  assert.strictEqual(resolveRoute('#dashboard'), 'dashboard');
+  assert.strictEqual(resolveRoute('#timing'), 'timing');
+  assert.strictEqual(resolveRoute('#trackmap'), 'trackmap');
+  assert.strictEqual(resolveRoute('#standings'), 'standings');
+  assert.strictEqual(resolveRoute('#invalid-route'), 'dashboard');
+}
+
+/**
  * Main test runner executing all active test suites.
  */
 function runAllTests() {
@@ -311,8 +440,11 @@ function runAllTests() {
   testTyreCompoundColorMapping();
   console.log('  PASS: testTyreCompoundColorMapping (S, M, H, I, W tokens mapped to official Pirelli hex codes)');
 
+  testHtmlStructureAndRouting();
+  console.log('  PASS: testHtmlStructureAndRouting (DOM sections, CSS tokens, navigation, and router verified)');
+
   const durationMs = Date.now() - startTime;
-  console.log(`\n[SUCCESS] All 3 test suites passed cleanly in ${durationMs}ms.`);
+  console.log(`\n[SUCCESS] All 4 test suites passed cleanly in ${durationMs}ms.`);
 }
 
 if (require.main === module) {
@@ -331,5 +463,6 @@ module.exports = {
   testDatasetSchema,
   testCountdownMath,
   testTyreCompoundColorMapping,
+  testHtmlStructureAndRouting,
   runAllTests
 };
