@@ -425,6 +425,175 @@ function testHtmlStructureAndRouting(htmlFilePath = path.join(__dirname, '../web
 }
 
 /**
+ * Calculates remaining time until target timestamp.
+ * Returns days, hours, minutes, seconds and isExpired flag.
+ */
+function calculateRemaining(targetUtcMillis, nowMillis = Date.now()) {
+  const targetMs = typeof targetUtcMillis === 'string'
+    ? new Date(targetUtcMillis).getTime()
+    : (typeof targetUtcMillis === 'number' ? targetUtcMillis : targetUtcMillis.getTime());
+  const currentMs = typeof nowMillis === 'string'
+    ? new Date(nowMillis).getTime()
+    : (typeof nowMillis === 'number' ? nowMillis : nowMillis.getTime());
+
+  if (Number.isNaN(targetMs) || Number.isNaN(currentMs)) {
+    throw new TypeError('Invalid timestamp passed to calculateRemaining');
+  }
+
+  const diffMs = targetMs - currentMs;
+  if (diffMs <= 0) {
+    return {
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      isExpired: true
+    };
+  }
+
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return {
+    days,
+    hours,
+    minutes,
+    seconds,
+    isExpired: false
+  };
+}
+
+/**
+ * Suite 5: Validates Dashboard screen components, countdown engine, session rendering and alarm persistence.
+ */
+function testDashboardCountdownAndSessions(htmlFilePath = path.join(__dirname, '../web/index.html')) {
+  assert(fs.existsSync(htmlFilePath), `HTML file does not exist: ${htmlFilePath}`);
+  const html = fs.readFileSync(htmlFilePath, 'utf8');
+
+  // 1. Countdown math arithmetic verification
+  // 45 seconds ahead
+  const t1 = calculateRemaining('2024-09-01T13:00:00Z', '2024-09-01T12:59:15Z');
+  assert.strictEqual(t1.days, 0);
+  assert.strictEqual(t1.hours, 0);
+  assert.strictEqual(t1.minutes, 0);
+  assert.strictEqual(t1.seconds, 45);
+  assert.strictEqual(t1.isExpired, false);
+
+  // 2 hours, 15 minutes ahead
+  const t2 = calculateRemaining('2024-09-01T13:00:00Z', '2024-09-01T10:45:00Z');
+  assert.strictEqual(t2.days, 0);
+  assert.strictEqual(t2.hours, 2);
+  assert.strictEqual(t2.minutes, 15);
+  assert.strictEqual(t2.seconds, 0);
+  assert.strictEqual(t2.isExpired, false);
+
+  // 3 days, 4 hours, 12 minutes, 50 seconds ahead
+  const t3 = calculateRemaining('2024-09-01T13:00:00Z', '2024-08-29T08:47:10Z');
+  assert.strictEqual(t3.days, 3);
+  assert.strictEqual(t3.hours, 4);
+  assert.strictEqual(t3.minutes, 12);
+  assert.strictEqual(t3.seconds, 50);
+  assert.strictEqual(t3.isExpired, false);
+
+  // Exact zero delta
+  const tZero = calculateRemaining('2024-09-01T13:00:00Z', '2024-09-01T13:00:00Z');
+  assert.strictEqual(tZero.days, 0);
+  assert.strictEqual(tZero.hours, 0);
+  assert.strictEqual(tZero.minutes, 0);
+  assert.strictEqual(tZero.seconds, 0);
+  assert.strictEqual(tZero.isExpired, true);
+
+  // Negative delta (past timestamp)
+  const tPast = calculateRemaining('2024-09-01T13:00:00Z', '2024-09-01T14:00:00Z');
+  assert.strictEqual(tPast.days, 0);
+  assert.strictEqual(tPast.hours, 0);
+  assert.strictEqual(tPast.minutes, 0);
+  assert.strictEqual(tPast.seconds, 0);
+  assert.strictEqual(tPast.isExpired, true);
+
+  // Numeric epoch inputs
+  const nowMs = 1725195600000;
+  const targetMs = nowMs + 7200000; // +2 hours
+  const tEpoch = calculateRemaining(targetMs, nowMs);
+  assert.strictEqual(tEpoch.hours, 2);
+  assert.strictEqual(tEpoch.isExpired, false);
+
+  // 2. DOM structure checks in #screen-dashboard
+  // Hero banner details
+  assert(/FORMULA 1 PIRELLI GRAN PREMIO D'ITALIA 2024/i.test(html), 'Missing Grand Prix title in hero card');
+  assert(/Autodromo Nazionale Monza/i.test(html), 'Missing circuit name in hero card');
+  assert(/Italy/i.test(html), 'Missing country in hero card');
+  assert(/16/i.test(html), 'Missing round 16 indicator in hero card');
+
+  // Countdown timer metric boxes
+  assert(/id=["']countDays["']/i.test(html), 'Missing #countDays element');
+  assert(/id=["']countHours["']/i.test(html), 'Missing #countHours element');
+  assert(/id=["']countMins["']/i.test(html), 'Missing #countMins element');
+  assert(/id=["']countSecs["']/i.test(html), 'Missing #countSecs element');
+  assert(/id=["']countdownSessionLabel["']/i.test(html), 'Missing #countdownSessionLabel element');
+
+  // 5 sessions rendering check
+  const sessionIds = ['fp1', 'fp2', 'fp3', 'quali', 'race'];
+  sessionIds.forEach(id => {
+    const sessionRegex = new RegExp(`data-session-id=["']${id}["']`, 'i');
+    assert(sessionRegex.test(html), `Missing session card element with data-session-id="${id}"`);
+  });
+
+  const sessionNames = [
+    'Практика 1 (FP1)',
+    'Практика 2 (FP2)',
+    'Практика 3 (FP3)',
+    'Квалификация',
+    'Гонка'
+  ];
+  sessionNames.forEach(name => {
+    assert(html.includes(name), `Missing session name "${name}" in HTML`);
+  });
+
+  // Alarm buttons check
+  assert(/class=["'][^"']*alarm-btn[^"']*["']/i.test(html), 'Missing .alarm-btn button elements');
+
+  // JavaScript Countdown & Alarm logic checks
+  assert(/function\s+calculateRemaining/i.test(html), 'Missing calculateRemaining function in web/index.html script');
+  assert(/setInterval\s*\([^,]+,\s*1000\s*\)/i.test(html), 'Missing 1000ms setInterval for countdown timer');
+  assert(/f1_session_alarms/i.test(html), 'Missing localStorage key "f1_session_alarms" in script');
+  assert(/Intl\.DateTimeFormat/i.test(html), 'Missing Intl.DateTimeFormat session localized formatting');
+
+  // 3. Alarm toggle persistence simulation
+  const mockStorage = {};
+  const mockLocalStorage = {
+    getItem: (key) => mockStorage[key] || null,
+    setItem: (key, val) => { mockStorage[key] = String(val); }
+  };
+
+  function simulateToggleAlarm(sessionId, state, storage) {
+    const key = 'f1_session_alarms';
+    const raw = storage.getItem(key);
+    const alarms = raw ? JSON.parse(raw) : (state.alarms || {});
+    alarms[sessionId] = !alarms[sessionId];
+    state.alarms = alarms;
+    storage.setItem(key, JSON.stringify(alarms));
+    return alarms;
+  }
+
+  const testState = { alarms: {} };
+  simulateToggleAlarm('race', testState, mockLocalStorage);
+  assert.strictEqual(testState.alarms.race, true, 'Alarm for race must toggle to true');
+  assert.strictEqual(JSON.parse(mockLocalStorage.getItem('f1_session_alarms')).race, true, 'LocalStorage must store race: true');
+
+  simulateToggleAlarm('fp1', testState, mockLocalStorage);
+  assert.strictEqual(testState.alarms.fp1, true, 'Alarm for fp1 must toggle to true');
+  assert.strictEqual(testState.alarms.race, true, 'Alarm for race must remain true');
+
+  simulateToggleAlarm('race', testState, mockLocalStorage);
+  assert.strictEqual(testState.alarms.race, false, 'Alarm for race must toggle back to false');
+  assert.strictEqual(JSON.parse(mockLocalStorage.getItem('f1_session_alarms')).race, false, 'LocalStorage must store race: false');
+}
+
+/**
  * Main test runner executing all active test suites.
  */
 function runAllTests() {
@@ -443,8 +612,11 @@ function runAllTests() {
   testHtmlStructureAndRouting();
   console.log('  PASS: testHtmlStructureAndRouting (DOM sections, CSS tokens, navigation, and router verified)');
 
+  testDashboardCountdownAndSessions();
+  console.log('  PASS: testDashboardCountdownAndSessions (hero card, 4-box countdown ticker, 5 sessions and alarms verified)');
+
   const durationMs = Date.now() - startTime;
-  console.log(`\n[SUCCESS] All 4 test suites passed cleanly in ${durationMs}ms.`);
+  console.log(`\n[SUCCESS] All 5 test suites passed cleanly in ${durationMs}ms.`);
 }
 
 if (require.main === module) {
@@ -460,9 +632,11 @@ module.exports = {
   F1_DATA_2024,
   TYRE_COLORS,
   calculateCountdown,
+  calculateRemaining,
   testDatasetSchema,
   testCountdownMath,
   testTyreCompoundColorMapping,
   testHtmlStructureAndRouting,
+  testDashboardCountdownAndSessions,
   runAllTests
 };

@@ -258,6 +258,238 @@
       margin-bottom: 16px;
     }
 
+    /* Dashboard Hero Card & Metadata */
+    .hero-card {
+      background: linear-gradient(135deg, rgba(225, 6, 0, 0.08) 0%, var(--f1-surface) 100%);
+      border: 1px solid var(--f1-surface-border);
+      border-left: 4px solid var(--f1-red-primary);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hero-round-badge {
+      background-color: var(--f1-red-primary);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .hero-location {
+      font-size: 12px;
+      color: var(--f1-text-muted);
+      font-weight: 500;
+    }
+
+    .hero-gp-title {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.2px;
+      color: var(--f1-text-white);
+      margin-bottom: 4px;
+    }
+
+    .hero-circuit-name {
+      font-size: 13px;
+      color: var(--f1-text-muted);
+      margin-bottom: 16px;
+    }
+
+    /* Countdown Metric Boxes */
+    .countdown-container {
+      background-color: rgba(16, 16, 20, 0.7);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 6px;
+      padding: 12px;
+    }
+
+    .countdown-header {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      color: var(--f1-text-muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .countdown-header::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--f1-red-primary);
+    }
+
+    .countdown-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .countdown-box {
+      background-color: var(--f1-surface);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 6px;
+      padding: 8px 4px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .countdown-val {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--f1-text-white);
+    }
+
+    .countdown-lbl {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--f1-text-muted);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+
+    /* Timetable Sessions List */
+    .sessions-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      color: var(--f1-text-white);
+    }
+
+    .sessions-tz-hint {
+      font-size: 11px;
+      color: var(--f1-text-muted);
+    }
+
+    .sessions-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .session-card {
+      background-color: var(--f1-surface);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: border-color 0.15s ease;
+    }
+
+    .session-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .session-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .session-tag {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: var(--f1-text-muted);
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 4px;
+      padding: 3px 6px;
+      min-width: 36px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .session-tag.gp-tag {
+      color: #FFFFFF;
+      background-color: rgba(225, 6, 0, 0.2);
+      border-color: var(--f1-red-primary);
+    }
+
+    .session-content {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .session-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--f1-text-white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .session-time {
+      font-size: 12px;
+      color: var(--f1-text-muted);
+      margin-top: 2px;
+      font-family: var(--font-mono);
+    }
+
+    .alarm-btn {
+      background: transparent;
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 6px;
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      cursor: pointer;
+      color: var(--f1-text-muted);
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .alarm-btn:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+      color: var(--f1-text-white);
+    }
+
+    .alarm-btn.active {
+      border-color: var(--f1-red-primary);
+      background-color: rgba(225, 6, 0, 0.15);
+      color: var(--f1-red-primary);
+    }
+
     /* Responsive media queries */
     @media (min-width: 768px) {
       .desktop-tabs {
@@ -275,6 +507,26 @@
 
       .screen-title {
         font-size: 24px;
+      }
+
+      .hero-card {
+        padding: 20px;
+      }
+
+      .hero-gp-title {
+        font-size: 22px;
+      }
+
+      .countdown-val {
+        font-size: 28px;
+      }
+
+      .countdown-grid {
+        gap: 12px;
+      }
+
+      .countdown-box {
+        padding: 12px 8px;
       }
     }
   </style>
@@ -308,10 +560,93 @@
         <p class="screen-subtitle" id="dashGpCircuit">Autodromo Nazionale Monza • Раунд 16</p>
       </header>
       <div id="dashboardHeroContainer">
-        <!-- Next session countdown and hero component mount point -->
+        <article class="hero-card" aria-label="Карточка Гран-при Италии 2024">
+          <div class="hero-meta">
+            <span class="hero-round-badge">Раунд 16</span>
+            <span class="hero-location">Autodromo Nazionale Monza, Italy</span>
+          </div>
+          <h2 class="hero-gp-title">FORMULA 1 PIRELLI GRAN PREMIO D'ITALIA 2024</h2>
+          <p class="hero-circuit-name">Autodromo Nazionale Monza, Italy</p>
+          <div class="countdown-container">
+            <div class="countdown-header" id="countdownSessionLabel">До старта сессии: Гонка</div>
+            <div class="countdown-grid" role="timer" aria-live="polite">
+              <div class="countdown-box">
+                <span class="countdown-val" id="countDays">00</span>
+                <span class="countdown-lbl">ДНЕЙ</span>
+              </div>
+              <div class="countdown-box">
+                <span class="countdown-val" id="countHours">00</span>
+                <span class="countdown-lbl">ЧАСОВ</span>
+              </div>
+              <div class="countdown-box">
+                <span class="countdown-val" id="countMins">00</span>
+                <span class="countdown-lbl">МИНУТ</span>
+              </div>
+              <div class="countdown-box">
+                <span class="countdown-val" id="countSecs">00</span>
+                <span class="countdown-lbl">СЕКУНД</span>
+              </div>
+            </div>
+          </div>
+        </article>
       </div>
       <div id="dashboardSessionsContainer">
-        <!-- 5 weekend sessions timetable mount point -->
+        <div class="sessions-header">
+          <h2 class="section-title">Расписание сессий уикенда</h2>
+          <span class="sessions-tz-hint" id="sessionsTzHint">Локальное время</span>
+        </div>
+        <div class="sessions-grid" id="sessionsList">
+          <article class="session-card" data-session-id="fp1">
+            <div class="session-main">
+              <span class="session-tag">FP1</span>
+              <div class="session-content">
+                <div class="session-name">Практика 1 (FP1)</div>
+                <div class="session-time" data-utc="2024-08-30T11:30:00Z">30 авг., 14:30</div>
+              </div>
+            </div>
+            <button class="alarm-btn" data-session-id="fp1" aria-label="Уведомление: Практика 1 (FP1)">🔕</button>
+          </article>
+          <article class="session-card" data-session-id="fp2">
+            <div class="session-main">
+              <span class="session-tag">FP2</span>
+              <div class="session-content">
+                <div class="session-name">Практика 2 (FP2)</div>
+                <div class="session-time" data-utc="2024-08-30T15:00:00Z">30 авг., 18:00</div>
+              </div>
+            </div>
+            <button class="alarm-btn" data-session-id="fp2" aria-label="Уведомление: Практика 2 (FP2)">🔕</button>
+          </article>
+          <article class="session-card" data-session-id="fp3">
+            <div class="session-main">
+              <span class="session-tag">FP3</span>
+              <div class="session-content">
+                <div class="session-name">Практика 3 (FP3)</div>
+                <div class="session-time" data-utc="2024-08-31T10:30:00Z">31 авг., 13:30</div>
+              </div>
+            </div>
+            <button class="alarm-btn" data-session-id="fp3" aria-label="Уведомление: Практика 3 (FP3)">🔕</button>
+          </article>
+          <article class="session-card" data-session-id="quali">
+            <div class="session-main">
+              <span class="session-tag">Q</span>
+              <div class="session-content">
+                <div class="session-name">Квалификация</div>
+                <div class="session-time" data-utc="2024-08-31T14:00:00Z">31 авг., 17:00</div>
+              </div>
+            </div>
+            <button class="alarm-btn" data-session-id="quali" aria-label="Уведомление: Квалификация">🔕</button>
+          </article>
+          <article class="session-card" data-session-id="race">
+            <div class="session-main">
+              <span class="session-tag gp-tag">GP</span>
+              <div class="session-content">
+                <div class="session-name">Гонка</div>
+                <div class="session-time" data-utc="2024-09-01T13:00:00Z">1 сент., 16:00</div>
+              </div>
+            </div>
+            <button class="alarm-btn" data-session-id="race" aria-label="Уведомление: Гонка">🔕</button>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -475,6 +810,97 @@
     };
 
     /**
+     * Local storage persistence key for session notification alarms
+     */
+    const ALARMS_STORAGE_KEY = 'f1_session_alarms';
+
+    /**
+     * Reads saved session alarm states from browser local storage.
+     */
+    function loadStoredAlarms() {
+      try {
+        if (typeof localStorage !== 'undefined') {
+          const raw = localStorage.getItem(ALARMS_STORAGE_KEY);
+          if (raw) {
+            return JSON.parse(raw);
+          }
+        }
+      } catch (err) {
+        console.warn('[Alarms] Failed reading from localStorage:', err);
+      }
+      return {};
+    }
+
+    /**
+     * Serializes session alarm map to browser local storage.
+     */
+    function persistAlarms(alarms) {
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem(ALARMS_STORAGE_KEY, JSON.stringify(alarms));
+        }
+      } catch (err) {
+        console.warn('[Alarms] Failed writing to localStorage:', err);
+      }
+    }
+
+    /**
+     * Computes countdown metrics for target timestamp against current epoch.
+     * Returns days, hours, minutes, seconds and isExpired boolean indicator.
+     */
+    function calculateRemaining(targetUtcMillis, nowMillis = Date.now()) {
+      const targetMs = typeof targetUtcMillis === 'string'
+        ? new Date(targetUtcMillis).getTime()
+        : (typeof targetUtcMillis === 'number' ? targetUtcMillis : targetUtcMillis.getTime());
+      const currentMs = typeof nowMillis === 'string'
+        ? new Date(nowMillis).getTime()
+        : (typeof nowMillis === 'number' ? nowMillis : nowMillis.getTime());
+
+      if (Number.isNaN(targetMs) || Number.isNaN(currentMs)) {
+        throw new TypeError('Invalid timestamp passed to calculateRemaining');
+      }
+
+      const diffMs = targetMs - currentMs;
+      if (diffMs <= 0) {
+        return {
+          days: 0,
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          isExpired: true
+        };
+      }
+
+      const totalSeconds = Math.floor(diffMs / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+
+      return {
+        days,
+        hours,
+        minutes,
+        seconds,
+        isExpired: false
+      };
+    }
+
+    /**
+     * Formats session UTC timestamp into user's localized timezone string.
+     */
+    function formatSessionTime(timeUtc) {
+      const userLocale = (typeof navigator !== 'undefined' && navigator.language) ? navigator.language : 'ru-RU';
+      return new Intl.DateTimeFormat(userLocale, {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(new Date(timeUtc));
+    }
+
+    /**
      * Reactive Observer Micro-Store
      */
     const Store = {
@@ -487,7 +913,7 @@
         flagStatus: 'GREEN',
         simulationRunning: true,
         simulationSpeed: 1,
-        alarms: {}
+        alarms: loadStoredAlarms()
       },
       subscribers: new Set(),
       subscribe(fn) {
@@ -503,6 +929,146 @@
         });
       }
     };
+
+    /**
+     * Determines active session for countdown timer calculation.
+     */
+    function getActiveCountdownSession(sessions = Store.state.sessions, now = Date.now()) {
+      if (!sessions || !sessions.length) return null;
+      const upcoming = sessions.find(s => new Date(s.timeUtc).getTime() > now);
+      return upcoming || sessions[sessions.length - 1];
+    }
+
+    /**
+     * Synchronizes countdown DOM boxes with current remaining delta.
+     */
+    function updateCountdownDisplay() {
+      const session = getActiveCountdownSession();
+      if (!session) return;
+
+      const now = Date.now();
+      const remaining = calculateRemaining(session.timeUtc, now);
+
+      const daysEl = document.getElementById('countDays');
+      const hoursEl = document.getElementById('countHours');
+      const minsEl = document.getElementById('countMins');
+      const secsEl = document.getElementById('countSecs');
+      const labelEl = document.getElementById('countdownSessionLabel');
+
+      if (daysEl) daysEl.textContent = String(remaining.days).padStart(2, '0');
+      if (hoursEl) hoursEl.textContent = String(remaining.hours).padStart(2, '0');
+      if (minsEl) minsEl.textContent = String(remaining.minutes).padStart(2, '0');
+      if (secsEl) secsEl.textContent = String(remaining.seconds).padStart(2, '0');
+
+      if (labelEl) {
+        if (remaining.isExpired) {
+          labelEl.textContent = `До старта сессии: ${session.name} (Завершено)`;
+        } else {
+          labelEl.textContent = `До старта сессии: ${session.name}`;
+        }
+      }
+    }
+
+    let countdownIntervalId = null;
+
+    /**
+     * Initializes 1000ms countdown interval loop.
+     */
+    function initCountdownEngine() {
+      if (countdownIntervalId) {
+        clearInterval(countdownIntervalId);
+      }
+      updateCountdownDisplay();
+      countdownIntervalId = setInterval(updateCountdownDisplay, 1000);
+    }
+
+    /**
+     * Populates sessions timetable with localized datetime and alarm status.
+     */
+    function renderSessions() {
+      const container = document.getElementById('sessionsList');
+      if (!container) return;
+
+      const sessions = Store.state.sessions || [];
+      const alarms = Store.state.alarms || {};
+
+      const badgeMap = {
+        fp1: 'FP1',
+        fp2: 'FP2',
+        fp3: 'FP3',
+        quali: 'Q',
+        race: 'GP'
+      };
+
+      container.innerHTML = sessions.map(session => {
+        const isGp = session.id === 'race';
+        const tagClass = isGp ? 'session-tag gp-tag' : 'session-tag';
+        const tagText = badgeMap[session.id] || session.id.toUpperCase();
+        const formattedTime = formatSessionTime(session.timeUtc);
+        const isAlarmActive = Boolean(alarms[session.id]);
+        const alarmIcon = isAlarmActive ? '🔔' : '🔕';
+        const alarmClass = isAlarmActive ? 'alarm-btn active' : 'alarm-btn';
+
+        return `
+          <article class="session-card" data-session-id="${session.id}">
+            <div class="session-main">
+              <span class="${tagClass}">${tagText}</span>
+              <div class="session-content">
+                <div class="session-name">${session.name}</div>
+                <div class="session-time" data-utc="${session.timeUtc}">${formattedTime}</div>
+              </div>
+            </div>
+            <button class="${alarmClass}" data-session-id="${session.id}" aria-label="Уведомление: ${session.name}">
+              ${alarmIcon}
+            </button>
+          </article>
+        `;
+      }).join('');
+    }
+
+    /**
+     * Toggles alarm subscription for designated session identifier.
+     */
+    function toggleSessionAlarm(sessionId) {
+      const alarms = { ...Store.state.alarms };
+      const nextActive = !alarms[sessionId];
+      alarms[sessionId] = nextActive;
+      Store.state.alarms = alarms;
+
+      persistAlarms(alarms);
+
+      if (nextActive && typeof Notification !== 'undefined' && typeof Notification.requestPermission === 'function') {
+        try {
+          const req = Notification.requestPermission();
+          if (req && typeof req.catch === 'function') {
+            req.catch(() => {});
+          }
+        } catch (e) {
+          // Ignore notification permission error
+        }
+      }
+
+      renderSessions();
+      Store.notify();
+    }
+
+    /**
+     * Registers delegated click handler for alarm action buttons.
+     */
+    function initDashboardEvents() {
+      const container = document.getElementById('dashboardSessionsContainer');
+      if (container) {
+        container.addEventListener('click', (e) => {
+          const btn = e.target.closest('.alarm-btn');
+          if (btn) {
+            const sessionId = btn.getAttribute('data-session-id');
+            if (sessionId) {
+              toggleSessionAlarm(sessionId);
+            }
+          }
+        });
+      }
+    }
 
     /**
      * Client-Side Hash Router
@@ -542,10 +1108,18 @@
 
     // Router event subscriptions
     window.addEventListener('hashchange', updateRoute);
-    window.addEventListener('DOMContentLoaded', updateRoute);
+    window.addEventListener('DOMContentLoaded', () => {
+      updateRoute();
+      renderSessions();
+      initCountdownEngine();
+      initDashboardEvents();
+    });
 
-    // Initial route synchronization
+    // Initial subsystem bootstrap
     updateRoute();
+    renderSessions();
+    initCountdownEngine();
+    initDashboardEvents();
   </script>
 </body>
 </html>
