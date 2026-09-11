@@ -1913,6 +1913,194 @@ async function testOfflineFirstAndSyncLogic() {
 }
 
 /**
+ * Suite 10: Validates OpenF1 Live Telemetry Engine, real-time columns (interval, tyres, pit stops),
+ * mode switcher controls (LIVE / REPLAY), session selector, and telemetry data processing.
+ */
+function testOpenF1LiveTelemetryAndControls(htmlFilePath = path.join(__dirname, '../web/index.html')) {
+  assert(fs.existsSync(htmlFilePath), `HTML file does not exist: ${htmlFilePath}`);
+  const html = fs.readFileSync(htmlFilePath, 'utf8');
+
+  // --- 1. Static HTML Controls Checks ---
+  assert(/id=["']btnModeLive["']/i.test(html), 'Missing #btnModeLive mode button');
+  assert(/id=["']btnModeReplay["']/i.test(html), 'Missing #btnModeReplay mode button');
+  assert(/id=["']telemetrySessionSelect["']/i.test(html), 'Missing #telemetrySessionSelect session selector');
+  assert(/id=["']replayTimeline["']/i.test(html), 'Missing #replayTimeline scrubber slider');
+
+  // --- 2. Static Table Header Checks ---
+  assert(/<th[^>]*>[\s\S]*?ИНТЕРВАЛ[\s\S]*?<\/th>/i.test(html), 'Missing table header "ИНТЕРВАЛ"');
+  assert(/<th[^>]*>[\s\S]*?ПИТ-СТОПЫ[\s\S]*?<\/th>/i.test(html), 'Missing table header "ПИТ-СТОПЫ"');
+
+  // --- 3. CSS Rule Checks ---
+  assert(/\.th-interval|\.interval-cell/i.test(html), 'Missing CSS rules for interval cell');
+  assert(/\.th-pit|\.pit-cell/i.test(html), 'Missing CSS rules for pit stops cell');
+  assert(/\.telemetry-bar/i.test(html), 'Missing CSS rule for .telemetry-bar');
+
+  // --- 4. VM Evaluation of OpenF1Engine & Telemetry Processing ---
+  const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/i);
+  assert(scriptMatch, 'Missing <script> block in HTML');
+  const scriptCode = scriptMatch[1];
+
+  const mockTbody = { innerHTML: '', dataset: {} };
+  const mockPill = { textContent: '', className: '' };
+  const mockBtnLive = {
+    classList: {
+      add: function(c) { this[c] = true; },
+      remove: function(c) { delete this[c]; },
+      contains: function(c) { return !!this[c]; }
+    },
+    setAttribute: () => {}
+  };
+  const mockBtnReplay = {
+    classList: {
+      add: function(c) { this[c] = true; },
+      remove: function(c) { delete this[c]; },
+      contains: function(c) { return !!this[c]; }
+    },
+    setAttribute: () => {}
+  };
+  const mockScrubber = { style: {} };
+  const mockCtx = {
+    arcCalls: 0,
+    clearRect: () => {},
+    fillRect: () => {},
+    fillText: () => {},
+    beginPath: () => {},
+    closePath: () => {},
+    stroke: () => {},
+    fill: () => {},
+    save: () => {},
+    restore: () => {},
+    moveTo: () => {},
+    lineTo: () => {},
+    arc: function() { this.arcCalls++; }
+  };
+  const mockCanvas = {
+    width: 800,
+    height: 450,
+    getContext: () => mockCtx,
+    getBoundingClientRect: () => ({ width: 800, height: 450 })
+  };
+
+  const domElements = {
+    timingTableBody: mockTbody,
+    telemetryStatus: mockPill,
+    btnModeLive: mockBtnLive,
+    btnModeReplay: mockBtnReplay,
+    replayScrubberBar: mockScrubber,
+    trackCanvas: mockCanvas
+  };
+
+  const sandbox = {
+    console,
+    Date,
+    Math,
+    String,
+    Number,
+    Boolean,
+    parseFloat,
+    parseInt,
+    TypeError,
+    Set,
+    Array,
+    Intl,
+    localStorage: { getItem: () => null, setItem: () => {}, removeItem: () => {} },
+    window: { location: { hash: '#timing' }, addEventListener: () => {} },
+    document: {
+      readyState: 'complete',
+      getElementById: (id) => domElements[id] || null,
+      querySelectorAll: () => [],
+      addEventListener: () => {}
+    },
+    Notification: { requestPermission: () => Promise.resolve('granted') },
+    setInterval: () => 1,
+    clearInterval: () => {},
+    fetch: () => Promise.resolve({ ok: true, json: () => Promise.resolve([]) })
+  };
+
+  vm.createContext(sandbox);
+  vm.runInContext(scriptCode, sandbox);
+
+  const OpenF1Engine = sandbox.OpenF1Engine || (sandbox.window && sandbox.window.OpenF1Engine);
+  assert(OpenF1Engine, 'OpenF1Engine must be defined on window or global scope');
+  assert(typeof OpenF1Engine.processTelemetry === 'function', 'OpenF1Engine.processTelemetry must be a function');
+
+  // Test data processing logic
+  const mockDrivers = [
+    { driver_number: 16, broadcast_name: 'C LECLERC', name_acronym: 'LEC', team_name: 'Ferrari', team_colour: 'E80020' },
+    { driver_number: 81, broadcast_name: 'O PIASTRI', name_acronym: 'PIA', team_name: 'McLaren', team_colour: 'FF8000' }
+  ];
+  const mockStints = [
+    { driver_number: 16, stint_number: 1, compound: 'MEDIUM', lap_start: 1, lap_end: 15 },
+    { driver_number: 16, stint_number: 2, compound: 'HARD', lap_start: 16, lap_end: 53 },
+    { driver_number: 81, stint_number: 1, compound: 'MEDIUM', lap_start: 1, lap_end: 16 },
+    { driver_number: 81, stint_number: 2, compound: 'HARD', lap_start: 17, lap_end: 38 },
+    { driver_number: 81, stint_number: 3, compound: 'HARD', lap_start: 39, lap_end: 53 }
+  ];
+  const mockPits = [
+    { driver_number: 16, lap_number: 15, pit_duration: 24.5 },
+    { driver_number: 81, lap_number: 16, pit_duration: 23.7 },
+    { driver_number: 81, lap_number: 38, pit_duration: 24.6 }
+  ];
+  const mockIntervals = [
+    { driver_number: 16, interval: 0, gap_to_leader: 0 },
+    { driver_number: 81, interval: 2.664, gap_to_leader: 2.664 }
+  ];
+  const mockLocations = [
+    { driver_number: 16, x: 8390, y: 15366 },
+    { driver_number: 81, x: 10218, y: 15864 }
+  ];
+
+  const processed = OpenF1Engine.processTelemetry(mockDrivers, mockStints, mockPits, mockIntervals, mockLocations);
+  assert(Array.isArray(processed), 'processTelemetry must return an array');
+  assert.strictEqual(processed.length, 2, 'processTelemetry must return 2 processed drivers');
+
+  // Verify Leclerc (P1)
+  const lec = processed.find(d => d.number === 16);
+  assert(lec, 'Driver 16 must be present in processed telemetry');
+  assert.strictEqual(lec.position, 1, 'Driver 16 must be P1');
+  assert.strictEqual(lec.currentTyre, 'H', 'Driver 16 tyre must be HARD (H)');
+  assert.strictEqual(lec.pitCount, 1, 'Driver 16 must have exactly 1 pit stop');
+  assert.strictEqual(lec.interval, 0, 'Leader interval must be 0');
+  assert.strictEqual(lec.gapToLeader, 0, 'Leader gapToLeader must be 0');
+  assert.strictEqual(lec.x, 8390, 'Driver 16 X coordinate must match location feed');
+
+  // Verify Piastri (P2)
+  const pia = processed.find(d => d.number === 81);
+  assert(pia, 'Driver 81 must be present in processed telemetry');
+  assert.strictEqual(pia.position, 2, 'Driver 81 must be P2');
+  assert.strictEqual(pia.currentTyre, 'H', 'Driver 81 tyre must be HARD (H)');
+  assert.strictEqual(pia.pitCount, 2, 'Driver 81 must have exactly 2 pit stops');
+  assert.strictEqual(pia.interval, 2.664, 'Driver 81 interval must be 2.664s');
+  assert.strictEqual(pia.gapToLeader, 2.664, 'Driver 81 gapToLeader must be 2.664s');
+
+  // Verify table rendering with telemetry
+  const Store = sandbox.Store || (sandbox.window && sandbox.window.Store);
+  Store.state.timing = processed;
+  sandbox.renderTimingTable();
+
+  assert(mockTbody.innerHTML.includes('interval-cell'), 'renderTimingTable must render interval-cell');
+  assert(mockTbody.innerHTML.includes('pit-cell'), 'renderTimingTable must render pit-cell');
+  assert(mockTbody.innerHTML.includes('1 STOP'), 'renderTimingTable must render 1 STOP for Leclerc');
+  assert(mockTbody.innerHTML.includes('2 STOPS'), 'renderTimingTable must render 2 STOPS for Piastri');
+
+  // Verify mode switching functions
+  assert(typeof sandbox.setTelemetryMode === 'function', 'setTelemetryMode must be a function');
+  sandbox.setTelemetryMode('live');
+  assert.strictEqual(OpenF1Engine.mode, 'live', 'Mode must switch to live');
+  assert(mockBtnLive.classList.contains('live-active'), 'btnModeLive must have live-active class');
+
+  sandbox.setTelemetryMode('replay');
+  assert.strictEqual(OpenF1Engine.mode, 'replay', 'Mode must switch back to replay');
+  assert(mockBtnReplay.classList.contains('active'), 'btnModeReplay must have active class');
+
+  // Verify real GPS coordinate rendering on canvas
+  assert(typeof sandbox.renderTrackFrame === 'function', 'renderTrackFrame must be a function');
+  mockCtx.arcCalls = 0;
+  sandbox.renderTrackFrame();
+  assert(mockCtx.arcCalls >= 2, `renderTrackFrame must draw real GPS car markers for telemetry drivers, got ${mockCtx.arcCalls}`);
+}
+
+/**
  * Main test runner executing all active test suites.
  */
 async function runAllTests() {
@@ -1946,8 +2134,11 @@ async function runAllTests() {
   await testOfflineFirstAndSyncLogic();
   console.log('  PASS: testOfflineFirstAndSyncLogic (background sync, offline fallback, CORS resilience, and root index.html mirror verified)');
 
+  testOpenF1LiveTelemetryAndControls();
+  console.log('  PASS: testOpenF1LiveTelemetryAndControls (OpenF1 data processing, interval/pit columns, and Live/Replay modes verified)');
+
   const durationMs = Date.now() - startTime;
-  console.log(`\n[SUCCESS] All 9 test suites passed cleanly in ${durationMs}ms.`);
+  console.log(`\n[SUCCESS] All 10 test suites passed cleanly in ${durationMs}ms.`);
 }
 
 if (require.main === module) {
@@ -1971,5 +2162,6 @@ module.exports = {
   testTrackMapCanvasAndKinematics,
   testStandingsTabsAndData,
   testOfflineFirstAndSyncLogic,
+  testOpenF1LiveTelemetryAndControls,
   runAllTests
 };
