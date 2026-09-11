@@ -43,9 +43,24 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // 1. Check startup error from Application.onCreate
         val startupErr = F1App.startupError
         if (startupErr != null) {
-            showDiagnosticView(startupErr)
+            launchCrashScreen(startupErr)
+            return
+        }
+
+        // 2. Check previous crash log from file if any
+        val crashFile = java.io.File(filesDir, "crash_log.txt")
+        if (crashFile.exists()) {
+            val text = crashFile.readText()
+            crashFile.delete()
+            val intent = android.content.Intent(this, CrashActivity::class.java).apply {
+                addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                putExtra("error_details", "PREVIOUS SESSION CRASH:\n\n$text")
+            }
+            startActivity(intent)
+            finish()
             return
         }
 
@@ -113,25 +128,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
         } catch (t: Throwable) {
-            showDiagnosticView(t)
+            launchCrashScreen(t)
         }
     }
 
-    private fun showDiagnosticView(throwable: Throwable) {
+    private fun launchCrashScreen(throwable: Throwable) {
         val sw = StringWriter()
         throwable.printStackTrace(PrintWriter(sw))
-        val stackTrace = sw.toString()
-
-        val scrollView = ScrollView(this).apply {
-            setBackgroundColor(0xFF101014.toInt())
-            setPadding(32, 48, 32, 48)
+        val errorText = "${throwable::class.java.name}: ${throwable.message}\n\nStack:\n$sw"
+        val intent = android.content.Intent(this, CrashActivity::class.java).apply {
+            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            putExtra("error_details", errorText)
         }
-        val textView = TextView(this).apply {
-            setTextColor(0xFFFFFFFF.toInt())
-            textSize = 13f
-            text = "F1 Race Hub Startup Diagnostic\n\nError: ${throwable::class.java.name}\n${throwable.message}\n\n$stackTrace"
-        }
-        scrollView.addView(textView)
-        setContentView(scrollView)
+        startActivity(intent)
+        finish()
     }
 }

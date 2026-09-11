@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="notification_action" type="layout" />
+    <item name="notification_action_tombstone" type="layout" />
+    <item name="notification_template_custom_big" type="layout" />
+</resources>

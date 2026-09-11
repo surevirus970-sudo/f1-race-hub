@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="alpha" format="float" />
+    <attr name="lStar" format="float" />
+    <attr name="nestedScrollViewStyle" format="reference" />
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="ic_call_answer" type="drawable">@drawable/ic_launcher</item>
+    <item name="ic_call_answer_low" type="drawable">@drawable/ic_launcher</item>
+    <item name="ic_call_answer_video" type="drawable">@drawable/ic_launcher</item>
+    <item name="ic_call_answer_video_low" type="drawable">@drawable/ic_launcher</item>
+    <item name="ic_call_decline" type="drawable">@drawable/ic_launcher</item>
+    <item name="ic_call_decline_low" type="drawable">@drawable/ic_launcher</item>
+    <item name="notification_icon_background" type="drawable">@drawable/ic_launcher</item>
+</resources>
