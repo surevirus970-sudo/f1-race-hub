@@ -782,6 +782,130 @@
       color: var(--f1-text-muted);
     }
 
+    /* Standings Segmented Tab Switcher & Championship Tables */
+    .standings-tab-bar {
+      display: inline-flex;
+      background-color: var(--f1-surface);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 8px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--f1-text-muted);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 20px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tab-btn:hover {
+      color: var(--f1-text-white);
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+      background-color: var(--f1-red-primary);
+      color: #FFFFFF;
+      box-shadow: 0 1px 4px rgba(225, 6, 0, 0.35);
+    }
+
+    .standings-pane {
+      display: block;
+    }
+
+    .standings-pane.hidden {
+      display: none !important;
+    }
+
+    /* Podium accent pills */
+    .pos-pill.pos-gold,
+    .pos-pill.pos-pill-1 {
+      background-color: rgba(255, 215, 0, 0.2);
+      color: #FFD700;
+      border: 1px solid rgba(255, 215, 0, 0.5);
+    }
+
+    .pos-pill.pos-silver,
+    .pos-pill.pos-pill-2 {
+      background-color: rgba(192, 192, 192, 0.2);
+      color: #E5E7EB;
+      border: 1px solid rgba(192, 192, 192, 0.5);
+    }
+
+    .pos-pill.pos-bronze,
+    .pos-pill.pos-pill-3 {
+      background-color: rgba(205, 127, 50, 0.2);
+      color: #F59E0B;
+      border: 1px solid rgba(205, 127, 50, 0.5);
+    }
+
+    .constructor-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .team-color-swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      display: inline-block;
+    }
+
+    .constructor-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--f1-text-white);
+    }
+
+    .driver-team-label {
+      font-size: 11px;
+      color: var(--f1-text-muted);
+      margin-left: 4px;
+    }
+
+    .pts-cell,
+    .wins-cell {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .th-pts,
+    .th-wins {
+      text-align: right;
+    }
+
+    .pts-val {
+      color: var(--f1-text-white);
+      font-weight: 800;
+    }
+
+    .wins-val {
+      color: var(--f1-text-muted);
+    }
+
+    .standings-row {
+      transition: background-color 0.12s ease;
+    }
+
+    .standings-row:hover {
+      background-color: rgba(255, 255, 255, 0.04);
+    }
+
     /* HiDPI Canvas Track Map & Controls */
     .track-toolbar {
       display: flex;
@@ -1697,8 +1821,489 @@
         <h1 class="screen-title">Турнирная таблица</h1>
         <p class="screen-subtitle">Сезон 2024: Личный зачет и Кубок конструкторов</p>
       </header>
+
+      <!-- Segmented Tab Switcher -->
+      <div class="standings-tab-bar" role="tablist" aria-label="Переключение зачетов чемпионата">
+        <button type="button" id="tabDriversBtn" class="tab-btn active" role="tab" aria-selected="true" aria-controls="standingsDriversContainer">Пилоты</button>
+        <button type="button" id="tabConstructorsBtn" class="tab-btn" role="tab" aria-selected="false" aria-controls="standingsConstructorsContainer">Конструкторы</button>
+      </div>
+
       <div id="standingsContainer">
-        <!-- Drivers & constructors tables mount point -->
+        <!-- Drivers Championship Table Container -->
+        <div id="standingsDriversContainer" class="standings-pane active" role="tabpanel" aria-labelledby="tabDriversBtn">
+          <div class="timing-table-wrapper" role="region" aria-label="Таблица личного зачета пилотов" tabindex="0">
+            <table class="timing-table standings-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="th-pos">ПОЗ</th>
+                  <th scope="col" class="th-driver">ПИЛОТ</th>
+                  <th scope="col" class="th-pts">ОЧКИ</th>
+                  <th scope="col" class="th-wins">ПОБЕДЫ</th>
+                </tr>
+              </thead>
+              <tbody id="standingsDriversBody">
+                <tr class="standings-row" data-position="1">
+                  <td class="pos-cell"><span class="pos-pill pos-pill-1 pos-gold">1</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #3671C6;" title="Red Bull Racing"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">VER</span>
+                        <span class="driver-name">Max Verstappen</span>
+                        <span class="driver-team-label">Red Bull Racing</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">303</span></td>
+                  <td class="wins-cell"><span class="wins-val">7</span></td>
+                </tr>
+                <tr class="standings-row" data-position="2">
+                  <td class="pos-cell"><span class="pos-pill pos-pill-2 pos-silver">2</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #FF8000;" title="McLaren"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">NOR</span>
+                        <span class="driver-name">Lando Norris</span>
+                        <span class="driver-team-label">McLaren</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">241</span></td>
+                  <td class="wins-cell"><span class="wins-val">2</span></td>
+                </tr>
+                <tr class="standings-row" data-position="3">
+                  <td class="pos-cell"><span class="pos-pill pos-pill-3 pos-bronze">3</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #E80020;" title="Ferrari"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">LEC</span>
+                        <span class="driver-name">Charles Leclerc</span>
+                        <span class="driver-team-label">Ferrari</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">217</span></td>
+                  <td class="wins-cell"><span class="wins-val">2</span></td>
+                </tr>
+                <tr class="standings-row" data-position="4">
+                  <td class="pos-cell"><span class="pos-pill">4</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #FF8000;" title="McLaren"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">PIA</span>
+                        <span class="driver-name">Oscar Piastri</span>
+                        <span class="driver-team-label">McLaren</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">197</span></td>
+                  <td class="wins-cell"><span class="wins-val">1</span></td>
+                </tr>
+                <tr class="standings-row" data-position="5">
+                  <td class="pos-cell"><span class="pos-pill">5</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #E80020;" title="Ferrari"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">SAI</span>
+                        <span class="driver-name">Carlos Sainz</span>
+                        <span class="driver-team-label">Ferrari</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">184</span></td>
+                  <td class="wins-cell"><span class="wins-val">1</span></td>
+                </tr>
+                <tr class="standings-row" data-position="6">
+                  <td class="pos-cell"><span class="pos-pill">6</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #27F4D2;" title="Mercedes"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">HAM</span>
+                        <span class="driver-name">Lewis Hamilton</span>
+                        <span class="driver-team-label">Mercedes</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">164</span></td>
+                  <td class="wins-cell"><span class="wins-val">2</span></td>
+                </tr>
+                <tr class="standings-row" data-position="7">
+                  <td class="pos-cell"><span class="pos-pill">7</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #3671C6;" title="Red Bull Racing"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">PER</span>
+                        <span class="driver-name">Sergio Perez</span>
+                        <span class="driver-team-label">Red Bull Racing</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">143</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="8">
+                  <td class="pos-cell"><span class="pos-pill">8</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #27F4D2;" title="Mercedes"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">RUS</span>
+                        <span class="driver-name">George Russell</span>
+                        <span class="driver-team-label">Mercedes</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">128</span></td>
+                  <td class="wins-cell"><span class="wins-val">1</span></td>
+                </tr>
+                <tr class="standings-row" data-position="9">
+                  <td class="pos-cell"><span class="pos-pill">9</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #229971;" title="Aston Martin"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">ALO</span>
+                        <span class="driver-name">Fernando Alonso</span>
+                        <span class="driver-team-label">Aston Martin</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">50</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="10">
+                  <td class="pos-cell"><span class="pos-pill">10</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #229971;" title="Aston Martin"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">STR</span>
+                        <span class="driver-name">Lance Stroll</span>
+                        <span class="driver-team-label">Aston Martin</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">24</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="11">
+                  <td class="pos-cell"><span class="pos-pill">11</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #B6BABD;" title="Haas"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">HUL</span>
+                        <span class="driver-name">Nico Hulkenberg</span>
+                        <span class="driver-team-label">Haas</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">22</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="12">
+                  <td class="pos-cell"><span class="pos-pill">12</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #6692FF;" title="RB"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">TSU</span>
+                        <span class="driver-name">Yuki Tsunoda</span>
+                        <span class="driver-team-label">RB</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">22</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="13">
+                  <td class="pos-cell"><span class="pos-pill">13</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #6692FF;" title="RB"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">RIC</span>
+                        <span class="driver-name">Daniel Ricciardo</span>
+                        <span class="driver-team-label">RB</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">12</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="14">
+                  <td class="pos-cell"><span class="pos-pill">14</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #0093CC;" title="Alpine"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">GAS</span>
+                        <span class="driver-name">Pierre Gasly</span>
+                        <span class="driver-team-label">Alpine</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">8</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="15">
+                  <td class="pos-cell"><span class="pos-pill">15</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #E80020;" title="Ferrari"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">BEA</span>
+                        <span class="driver-name">Oliver Bearman</span>
+                        <span class="driver-team-label">Ferrari</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">7</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="16">
+                  <td class="pos-cell"><span class="pos-pill">16</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #B6BABD;" title="Haas"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">MAG</span>
+                        <span class="driver-name">Kevin Magnussen</span>
+                        <span class="driver-team-label">Haas</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">6</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="17">
+                  <td class="pos-cell"><span class="pos-pill">17</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #64C4FF;" title="Williams"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">ALB</span>
+                        <span class="driver-name">Alexander Albon</span>
+                        <span class="driver-team-label">Williams</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">6</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="18">
+                  <td class="pos-cell"><span class="pos-pill">18</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #0093CC;" title="Alpine"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">OCO</span>
+                        <span class="driver-name">Esteban Ocon</span>
+                        <span class="driver-team-label">Alpine</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">5</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="19">
+                  <td class="pos-cell"><span class="pos-pill">19</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #52E252;" title="Kick Sauber"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">ZHO</span>
+                        <span class="driver-name">Zhou Guanyu</span>
+                        <span class="driver-team-label">Kick Sauber</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">0</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="20">
+                  <td class="pos-cell"><span class="pos-pill">20</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #64C4FF;" title="Williams"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">SAR</span>
+                        <span class="driver-name">Logan Sargeant</span>
+                        <span class="driver-team-label">Williams</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">0</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="21">
+                  <td class="pos-cell"><span class="pos-pill">21</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #64C4FF;" title="Williams"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">COL</span>
+                        <span class="driver-name">Franco Colapinto</span>
+                        <span class="driver-team-label">Williams</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">0</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="22">
+                  <td class="pos-cell"><span class="pos-pill">22</span></td>
+                  <td>
+                    <div class="driver-cell">
+                      <span class="team-color-bar" style="background-color: #52E252;" title="Kick Sauber"></span>
+                      <div class="driver-info">
+                        <span class="driver-code">BOT</span>
+                        <span class="driver-name">Valtteri Bottas</span>
+                        <span class="driver-team-label">Kick Sauber</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">0</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Constructors Championship Table Container -->
+        <div id="standingsConstructorsContainer" class="standings-pane" role="tabpanel" aria-labelledby="tabConstructorsBtn" style="display: none;">
+          <div class="timing-table-wrapper" role="region" aria-label="Таблица Кубка конструкторов" tabindex="0">
+            <table class="timing-table standings-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="th-pos">ПОЗ</th>
+                  <th scope="col" class="th-constructor">КОМАНДА</th>
+                  <th scope="col" class="th-pts">ОЧКИ</th>
+                  <th scope="col" class="th-wins">ПОБЕДЫ</th>
+                </tr>
+              </thead>
+              <tbody id="standingsConstructorsBody">
+                <tr class="standings-row" data-position="1">
+                  <td class="pos-cell"><span class="pos-pill pos-pill-1 pos-gold">1</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #3671C6;" title="Red Bull Racing"></span>
+                      <span class="constructor-name">Red Bull Racing</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">446</span></td>
+                  <td class="wins-cell"><span class="wins-val">7</span></td>
+                </tr>
+                <tr class="standings-row" data-position="2">
+                  <td class="pos-cell"><span class="pos-pill pos-pill-2 pos-silver">2</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #FF8000;" title="McLaren"></span>
+                      <span class="constructor-name">McLaren</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">438</span></td>
+                  <td class="wins-cell"><span class="wins-val">3</span></td>
+                </tr>
+                <tr class="standings-row" data-position="3">
+                  <td class="pos-cell"><span class="pos-pill pos-pill-3 pos-bronze">3</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #E80020;" title="Ferrari"></span>
+                      <span class="constructor-name">Ferrari</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">407</span></td>
+                  <td class="wins-cell"><span class="wins-val">3</span></td>
+                </tr>
+                <tr class="standings-row" data-position="4">
+                  <td class="pos-cell"><span class="pos-pill">4</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #27F4D2;" title="Mercedes"></span>
+                      <span class="constructor-name">Mercedes</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">292</span></td>
+                  <td class="wins-cell"><span class="wins-val">3</span></td>
+                </tr>
+                <tr class="standings-row" data-position="5">
+                  <td class="pos-cell"><span class="pos-pill">5</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #229971;" title="Aston Martin"></span>
+                      <span class="constructor-name">Aston Martin</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">74</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="6">
+                  <td class="pos-cell"><span class="pos-pill">6</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #6692FF;" title="RB"></span>
+                      <span class="constructor-name">RB</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">34</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="7">
+                  <td class="pos-cell"><span class="pos-pill">7</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #B6BABD;" title="Haas"></span>
+                      <span class="constructor-name">Haas</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">28</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="8">
+                  <td class="pos-cell"><span class="pos-pill">8</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #0093CC;" title="Alpine"></span>
+                      <span class="constructor-name">Alpine</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">13</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="9">
+                  <td class="pos-cell"><span class="pos-pill">9</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #64C4FF;" title="Williams"></span>
+                      <span class="constructor-name">Williams</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">6</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+                <tr class="standings-row" data-position="10">
+                  <td class="pos-cell"><span class="pos-pill">10</span></td>
+                  <td>
+                    <div class="constructor-cell">
+                      <span class="team-color-swatch" style="background-color: #52E252;" title="Kick Sauber"></span>
+                      <span class="constructor-name">Kick Sauber</span>
+                    </div>
+                  </td>
+                  <td class="pts-cell"><span class="pts-val">0</span></td>
+                  <td class="wins-cell"><span class="wins-val">0</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
   </main>
@@ -1922,6 +2527,7 @@
     const Store = {
       state: {
         activeTab: 'dashboard',
+        standingsTab: 'drivers',
         nextGrandPrix: F1_DATA_2024.grandPrix,
         sessions: F1_DATA_2024.grandPrix.sessions,
         timing: F1_DATA_2024.timing.map(d => ({ ...d })),
@@ -2695,6 +3301,225 @@
       reset: resetTrackSimulation
     };
 
+    /**
+     * Resolves team hex color for a given constructor or driver team name.
+     */
+    function getTeamColor(teamName) {
+      if (!teamName) return '#8E8E9A';
+      const constructors = (Store.state.standings && Store.state.standings.constructors) || [];
+      const constructor = constructors.find(c => c.name === teamName);
+      if (constructor && constructor.color) return constructor.color;
+      const timing = Store.state.timing || [];
+      const driver = timing.find(d => d.team === teamName);
+      if (driver && driver.teamColor) return driver.teamColor;
+      return '#8E8E9A';
+    }
+
+    /**
+     * Resolves position pill accent class for top-3 podium places.
+     */
+    function getPodiumPillClass(pos) {
+      if (pos === 1) return 'pos-pill pos-pill-1 pos-gold';
+      if (pos === 2) return 'pos-pill pos-pill-2 pos-silver';
+      if (pos === 3) return 'pos-pill pos-pill-3 pos-bronze';
+      return 'pos-pill';
+    }
+
+    /**
+     * Renders 22-driver championship standings table into DOM.
+     */
+    function renderStandingsDrivers() {
+      const container = document.getElementById('standingsDriversBody') || document.getElementById('standingsDriversContainer');
+      if (!container) return;
+
+      const drivers = (Store.state.standings && Store.state.standings.drivers) || [];
+      const rowsHtml = drivers.map(driver => {
+        const teamColor = getTeamColor(driver.team);
+        const pillClass = getPodiumPillClass(driver.position);
+
+        return `
+          <tr class="standings-row" data-position="${driver.position}">
+            <td class="pos-cell"><span class="${pillClass}">${driver.position}</span></td>
+            <td>
+              <div class="driver-cell">
+                <span class="team-color-bar" style="background-color: ${teamColor};" title="${driver.team}"></span>
+                <div class="driver-info">
+                  <span class="driver-code">${driver.code}</span>
+                  <span class="driver-name">${driver.name}</span>
+                  <span class="driver-team-label">${driver.team}</span>
+                </div>
+              </div>
+            </td>
+            <td class="pts-cell"><span class="pts-val">${driver.points}</span></td>
+            <td class="wins-cell"><span class="wins-val">${driver.wins}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      if (container.tagName === 'TBODY' || container.id === 'standingsDriversBody') {
+        container.innerHTML = rowsHtml;
+      } else {
+        const tbody = container.querySelector ? container.querySelector('tbody') : null;
+        if (tbody) {
+          tbody.innerHTML = rowsHtml;
+        } else {
+          container.innerHTML = `
+            <div class="timing-table-wrapper" role="region" aria-label="Таблица личного зачета пилотов" tabindex="0">
+              <table class="timing-table standings-table">
+                <thead>
+                  <tr>
+                    <th scope="col" class="th-pos">ПОЗ</th>
+                    <th scope="col" class="th-driver">ПИЛОТ</th>
+                    <th scope="col" class="th-pts">ОЧКИ</th>
+                    <th scope="col" class="th-wins">ПОБЕДЫ</th>
+                  </tr>
+                </thead>
+                <tbody id="standingsDriversBody">
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+      }
+    }
+
+    /**
+     * Renders 10-constructor championship standings table into DOM.
+     */
+    function renderStandingsConstructors() {
+      const container = document.getElementById('standingsConstructorsBody') || document.getElementById('standingsConstructorsContainer');
+      if (!container) return;
+
+      const constructors = (Store.state.standings && Store.state.standings.constructors) || [];
+      const rowsHtml = constructors.map(team => {
+        const pillClass = getPodiumPillClass(team.position);
+
+        return `
+          <tr class="standings-row" data-position="${team.position}">
+            <td class="pos-cell"><span class="${pillClass}">${team.position}</span></td>
+            <td>
+              <div class="constructor-cell">
+                <span class="team-color-swatch" style="background-color: ${team.color};" title="${team.name}"></span>
+                <span class="constructor-name">${team.name}</span>
+              </div>
+            </td>
+            <td class="pts-cell"><span class="pts-val">${team.points}</span></td>
+            <td class="wins-cell"><span class="wins-val">${team.wins}</span></td>
+          </tr>
+        `;
+      }).join('');
+
+      if (container.tagName === 'TBODY' || container.id === 'standingsConstructorsBody') {
+        container.innerHTML = rowsHtml;
+      } else {
+        const tbody = container.querySelector ? container.querySelector('tbody') : null;
+        if (tbody) {
+          tbody.innerHTML = rowsHtml;
+        } else {
+          container.innerHTML = `
+            <div class="timing-table-wrapper" role="region" aria-label="Таблица Кубка конструкторов" tabindex="0">
+              <table class="timing-table standings-table">
+                <thead>
+                  <tr>
+                    <th scope="col" class="th-pos">ПОЗ</th>
+                    <th scope="col" class="th-constructor">КОМАНДА</th>
+                    <th scope="col" class="th-pts">ОЧКИ</th>
+                    <th scope="col" class="th-wins">ПОБЕДЫ</th>
+                  </tr>
+                </thead>
+                <tbody id="standingsConstructorsBody">
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+      }
+    }
+
+    /**
+     * Switches between Drivers and Constructors standings tabs.
+     * Synchronizes Store.state.standingsTab ('drivers' | 'constructors').
+     */
+    function switchStandingsTab(tab) {
+      const activeTab = (tab === 'constructors') ? 'constructors' : 'drivers';
+      Store.state.standingsTab = activeTab;
+
+      const driversBtn = document.getElementById('tabDriversBtn');
+      const constructorsBtn = document.getElementById('tabConstructorsBtn');
+      const driversContainer = document.getElementById('standingsDriversContainer');
+      const constructorsContainer = document.getElementById('standingsConstructorsContainer');
+
+      if (activeTab === 'drivers') {
+        if (driversBtn) {
+          driversBtn.classList.add('active');
+          if (typeof driversBtn.setAttribute === 'function') {
+            driversBtn.setAttribute('aria-selected', 'true');
+          }
+        }
+        if (constructorsBtn) {
+          constructorsBtn.classList.remove('active');
+          if (typeof constructorsBtn.setAttribute === 'function') {
+            constructorsBtn.setAttribute('aria-selected', 'false');
+          }
+        }
+        if (driversContainer) {
+          driversContainer.style.display = 'block';
+          driversContainer.classList.remove('hidden');
+          driversContainer.classList.add('active');
+        }
+        if (constructorsContainer) {
+          constructorsContainer.style.display = 'none';
+          constructorsContainer.classList.add('hidden');
+          constructorsContainer.classList.remove('active');
+        }
+      } else {
+        if (constructorsBtn) {
+          constructorsBtn.classList.add('active');
+          if (typeof constructorsBtn.setAttribute === 'function') {
+            constructorsBtn.setAttribute('aria-selected', 'true');
+          }
+        }
+        if (driversBtn) {
+          driversBtn.classList.remove('active');
+          if (typeof driversBtn.setAttribute === 'function') {
+            driversBtn.setAttribute('aria-selected', 'false');
+          }
+        }
+        if (constructorsContainer) {
+          constructorsContainer.style.display = 'block';
+          constructorsContainer.classList.remove('hidden');
+          constructorsContainer.classList.add('active');
+        }
+        if (driversContainer) {
+          driversContainer.style.display = 'none';
+          driversContainer.classList.add('hidden');
+          driversContainer.classList.remove('active');
+        }
+      }
+
+      Store.notify();
+    }
+
+    /**
+     * Binds click handlers to segmented standings tab buttons.
+     */
+    function initStandingsEvents() {
+      const driversBtn = document.getElementById('tabDriversBtn');
+      const constructorsBtn = document.getElementById('tabConstructorsBtn');
+
+      if (driversBtn && !driversBtn.dataset.eventsBound) {
+        driversBtn.dataset.eventsBound = 'true';
+        driversBtn.addEventListener('click', () => switchStandingsTab('drivers'));
+      }
+
+      if (constructorsBtn && !constructorsBtn.dataset.eventsBound) {
+        constructorsBtn.dataset.eventsBound = 'true';
+        constructorsBtn.addEventListener('click', () => switchStandingsTab('constructors'));
+      }
+    }
+
     if (typeof window !== 'undefined') {
       window.TrackMapCanvas = TrackMapCanvas;
       window.getTrackCoordinates = getTrackCoordinates;
@@ -2704,6 +3529,12 @@
       window.toggleTrackSimSpeed = toggleTrackSimSpeed;
       window.resetTrackSimulation = resetTrackSimulation;
       window.resizeTrackCanvas = resizeTrackCanvas;
+      window.renderStandingsDrivers = renderStandingsDrivers;
+      window.renderStandingsConstructors = renderStandingsConstructors;
+      window.switchStandingsTab = switchStandingsTab;
+      window.initStandingsEvents = initStandingsEvents;
+      window.getTeamColor = getTeamColor;
+      window.getPodiumPillClass = getPodiumPillClass;
     }
 
     /**
@@ -2767,6 +3598,9 @@
       initTrackMapEvents();
       resizeTrackCanvas();
       renderTrackFrame();
+      renderStandingsDrivers();
+      renderStandingsConstructors();
+      initStandingsEvents();
       if (Store.state.activeTab === 'trackmap' && Store.state.simulationRunning && (typeof document === 'undefined' || !document.hidden)) {
         startTrackAnimation();
       }

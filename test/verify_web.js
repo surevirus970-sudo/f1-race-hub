@@ -1290,6 +1290,325 @@ function testTrackMapCanvasAndKinematics(htmlFilePath = path.join(__dirname, '..
 }
 
 /**
+ * Suite 8: Validates Championship Standings screen, segmented tab switcher,
+ * Drivers Championship (22 positions, P1-P3 podium accents, descending points),
+ * and Constructors Championship (10 teams, official hex colors, descending points).
+ */
+function testStandingsTabsAndData(htmlFilePath = path.join(__dirname, '../web/index.html')) {
+  assert(fs.existsSync(htmlFilePath), `HTML file does not exist: ${htmlFilePath}`);
+  const html = fs.readFileSync(htmlFilePath, 'utf8');
+
+  // --- 1. Static HTML and DOM Structure Checks ---
+  assert(/<button[^>]+id=["']tabDriversBtn["'][^>]*>[\s\S]*?Пилоты<\/button>/i.test(html), 'Missing #tabDriversBtn button with text "Пилоты"');
+  assert(/<button[^>]+id=["']tabConstructorsBtn["'][^>]*>[\s\S]*?Конструкторы<\/button>/i.test(html), 'Missing #tabConstructorsBtn button with text "Конструкторы"');
+
+  const driversBtnMatch = html.match(/<button[^>]+id=["']tabDriversBtn["'][^>]*>/i);
+  assert(driversBtnMatch && /class=["'][^"']*tab-btn[^"']*["']/i.test(driversBtnMatch[0]), '#tabDriversBtn must have class "tab-btn"');
+  assert(driversBtnMatch && /class=["'][^"']*active[^"']*["']/i.test(driversBtnMatch[0]), '#tabDriversBtn must have class "active" initially');
+
+  const constructorsBtnMatch = html.match(/<button[^>]+id=["']tabConstructorsBtn["'][^>]*>/i);
+  assert(constructorsBtnMatch && /class=["'][^"']*tab-btn[^"']*["']/i.test(constructorsBtnMatch[0]), '#tabConstructorsBtn must have class "tab-btn"');
+
+  assert(/id=["']standingsDriversContainer["']/i.test(html), 'Missing container #standingsDriversContainer');
+  assert(/id=["']standingsConstructorsContainer["']/i.test(html), 'Missing container #standingsConstructorsContainer');
+
+  // Verify column header labels for Drivers Championship (ПОЗ, ПИЛОТ, ОЧКИ, ПОБЕДЫ)
+  assert(/<th[^>]*>ПОЗ<\/th>/i.test(html), 'Drivers standings missing table header "ПОЗ"');
+  assert(/<th[^>]*>ПИЛОТ<\/th>/i.test(html), 'Drivers standings missing table header "ПИЛОТ"');
+  assert(/<th[^>]*>ОЧКИ<\/th>/i.test(html), 'Standings missing table header "ОЧКИ"');
+  assert(/<th[^>]*>ПОБЕДЫ<\/th>/i.test(html), 'Standings missing table header "ПОБЕДЫ"');
+
+  // Verify column header labels for Constructors Championship (ПОЗ, КОМАНДА, ОЧКИ, ПОБЕДЫ)
+  assert(/<th[^>]*>КОМАНДА<\/th>/i.test(html), 'Constructors standings missing table header "КОМАНДА"');
+
+  // Verify CSS tokens and styles for standings
+  assert(/\.standings-tab-bar/i.test(html), 'Missing CSS class .standings-tab-bar');
+  assert(/\.tab-btn/i.test(html), 'Missing CSS class .tab-btn');
+  assert(/\.pos-pill\.pos-gold|\.pos-pill-1/i.test(html), 'Missing gold podium accent CSS token');
+  assert(/\.pos-pill\.pos-silver|\.pos-pill-2/i.test(html), 'Missing silver podium accent CSS token');
+  assert(/\.pos-pill\.pos-bronze|\.pos-pill-3/i.test(html), 'Missing bronze podium accent CSS token');
+
+  // --- 2. VM Execution and Production Logic Verification ---
+  const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/i);
+  assert(scriptMatch, 'Missing <script> block in web/index.html');
+  const scriptCode = scriptMatch[1];
+
+  function createMockElement(id = '', initialClasses = '') {
+    const classes = new Set(initialClasses.split(' ').filter(Boolean));
+    const attributes = {};
+    const listeners = {};
+    return {
+      id,
+      get className() {
+        return Array.from(classes).join(' ');
+      },
+      set className(val) {
+        classes.clear();
+        (val || '').split(' ').filter(Boolean).forEach(c => classes.add(c));
+      },
+      classList: {
+        add: (...names) => names.forEach(n => classes.add(n)),
+        remove: (...names) => names.forEach(n => classes.delete(n)),
+        contains: (n) => classes.has(n),
+        toggle: (n) => (classes.has(n) ? classes.delete(n) : classes.add(n))
+      },
+      dataset: {},
+      innerHTML: '',
+      textContent: '',
+      style: {},
+      setAttribute: (k, v) => { attributes[k] = String(v); },
+      getAttribute: (k) => attributes[k] || null,
+      hasAttribute: (k) => k in attributes,
+      removeAttribute: (k) => { delete attributes[k]; },
+      addEventListener: (evt, fn) => {
+        listeners[evt] = listeners[evt] || [];
+        listeners[evt].push(fn);
+      },
+      dispatchEvent: (evt) => {
+        (listeners[evt.type] || []).forEach(fn => fn(evt));
+      },
+      querySelector: () => null,
+      querySelectorAll: () => []
+    };
+  }
+
+  const mockDriversBtn = createMockElement('tabDriversBtn', 'tab-btn active');
+  mockDriversBtn.textContent = 'Пилоты';
+  const mockConstructorsBtn = createMockElement('tabConstructorsBtn', 'tab-btn');
+  mockConstructorsBtn.textContent = 'Конструкторы';
+
+  const mockDriversContainer = createMockElement('standingsDriversContainer', 'standings-pane active');
+  const mockConstructorsContainer = createMockElement('standingsConstructorsContainer', 'standings-pane');
+  mockConstructorsContainer.style.display = 'none';
+
+  const mockDriversBody = createMockElement('standingsDriversBody');
+  const mockConstructorsBody = createMockElement('standingsConstructorsBody');
+  const mockStandingsContainer = createMockElement('standingsContainer');
+
+  const domElements = {
+    tabDriversBtn: mockDriversBtn,
+    tabConstructorsBtn: mockConstructorsBtn,
+    standingsDriversContainer: mockDriversContainer,
+    standingsConstructorsContainer: mockConstructorsContainer,
+    standingsDriversBody: mockDriversBody,
+    standingsConstructorsBody: mockConstructorsBody,
+    standingsContainer: mockStandingsContainer,
+    raceControlBanner: createMockElement('raceControlBanner'),
+    raceControlStatusText: createMockElement('raceControlStatusText'),
+    timingTableBody: createMockElement('timingTableBody'),
+    timingBannerContainer: createMockElement('timingBannerContainer'),
+    timingTableContainer: createMockElement('timingTableContainer'),
+    dashboardSessionsContainer: createMockElement('dashboardSessionsContainer'),
+    sessionsList: createMockElement('sessionsList'),
+    countDays: createMockElement('countDays'),
+    countHours: createMockElement('countHours'),
+    countMins: createMockElement('countMins'),
+    countSecs: createMockElement('countSecs'),
+    countdownSessionLabel: createMockElement('countdownSessionLabel'),
+    dashGpTitle: createMockElement('dashGpTitle'),
+    dashGpCircuit: createMockElement('dashGpCircuit'),
+    networkStatusBadge: createMockElement('networkStatusBadge'),
+    trackCanvas: createMockElement('trackCanvas'),
+    simPlayPauseBtn: createMockElement('simPlayPauseBtn'),
+    simSpeedBtn: createMockElement('simSpeedBtn'),
+    simResetBtn: createMockElement('simResetBtn'),
+    trackToolbar: createMockElement('trackToolbar'),
+    trackMapContainer: createMockElement('trackMapContainer'),
+    trackLegendContainer: createMockElement('trackLegendContainer')
+  };
+
+  const sandbox = {
+    console,
+    Date,
+    Math,
+    String,
+    Number,
+    Boolean,
+    parseFloat,
+    parseInt,
+    TypeError,
+    Set,
+    Array,
+    Intl,
+    localStorage: {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {}
+    },
+    window: {
+      location: { hash: '#standings' },
+      addEventListener: () => {}
+    },
+    document: {
+      readyState: 'complete',
+      getElementById: (id) => domElements[id] || null,
+      querySelectorAll: (sel) => {
+        if (sel === '.screen') return [];
+        if (sel === '.nav-item') return [];
+        if (sel === '.flag-btn') return [];
+        return [];
+      },
+      addEventListener: () => {}
+    },
+    Notification: {
+      requestPermission: () => Promise.resolve('granted')
+    },
+    setInterval: () => 1,
+    clearInterval: () => {}
+  };
+
+  vm.createContext(sandbox);
+  vm.runInContext(scriptCode, sandbox);
+
+  const Store = sandbox.Store || sandbox.window.Store;
+  assert(Store && Store.state, 'Store must be initialized with state in VM context');
+  assert.strictEqual(Store.state.standingsTab, 'drivers', 'Store.state.standingsTab must default to "drivers"');
+
+  // Verify renderStandingsDrivers execution
+  assert(typeof sandbox.renderStandingsDrivers === 'function', 'renderStandingsDrivers must be a function');
+  sandbox.renderStandingsDrivers();
+
+  const driversHtml = mockDriversBody.innerHTML;
+  assert(driversHtml, 'renderStandingsDrivers must populate standingsDriversBody.innerHTML');
+
+  const driverRowMatches = driversHtml.match(/<tr[^>]*class=["'][^"']*standings-row[^"']*["']/gi) || [];
+  assert.strictEqual(driverRowMatches.length, 22, `Drivers table must render exactly 22 rows, found ${driverRowMatches.length}`);
+
+  // Assert top-3 podium accent pills (P1 Gold, P2 Silver, P3 Bronze)
+  const p1Match = driversHtml.match(/<tr[^>]*data-position=["']1["'][\s\S]*?<\/tr>/i);
+  assert(p1Match, 'Must render row with data-position="1"');
+  assert(/pos-gold|pos-pill-1/i.test(p1Match[0]), 'P1 row must have gold podium accent pill');
+  assert(/VER/i.test(p1Match[0]), 'P1 driver code must be VER');
+  assert(/303/i.test(p1Match[0]), 'P1 driver points must be 303');
+  assert(/7/i.test(p1Match[0]), 'P1 driver wins must be 7');
+
+  const p2Match = driversHtml.match(/<tr[^>]*data-position=["']2["'][\s\S]*?<\/tr>/i);
+  assert(p2Match, 'Must render row with data-position="2"');
+  assert(/pos-silver|pos-pill-2/i.test(p2Match[0]), 'P2 row must have silver podium accent pill');
+  assert(/NOR/i.test(p2Match[0]), 'P2 driver code must be NOR');
+
+  const p3Match = driversHtml.match(/<tr[^>]*data-position=["']3["'][\s\S]*?<\/tr>/i);
+  assert(p3Match, 'Must render row with data-position="3"');
+  assert(/pos-bronze|pos-pill-3/i.test(p3Match[0]), 'P3 row must have bronze podium accent pill');
+  assert(/LEC/i.test(p3Match[0]), 'P3 driver code must be LEC');
+
+  // Verify all 22 drivers have team color indicator and descending points
+  const hexColorRegex = /style=["'][^"']*background-color:\s*(#[0-9A-Fa-f]{6})/i;
+  let lastPoints = Infinity;
+  for (let pos = 1; pos <= 22; pos++) {
+    const rowMatch = driversHtml.match(new RegExp(`<tr[^>]*data-position=["']${pos}["'][\\s\\S]*?<\\/tr>`, 'i'));
+    assert(rowMatch, `Missing driver standings row for position P${pos}`);
+    const rowContent = rowMatch[0];
+
+    assert(hexColorRegex.test(rowContent), `Driver P${pos} missing team color indicator bar`);
+
+    const ptsMatch = rowContent.match(/<td[^>]*class=["'][^"']*pts-cell[^"']*["'][^>]*>[\s\S]*?([0-9]+)[\s\S]*?<\/td>/i);
+    assert(ptsMatch, `Driver P${pos} missing points cell value`);
+    const pts = parseInt(ptsMatch[1], 10);
+    assert(!Number.isNaN(pts) && pts >= 0, `Driver P${pos} points must be a non-negative number`);
+    assert(pts <= lastPoints, `Drivers standings must be descending in points: P${pos} (${pts}) > previous (${lastPoints})`);
+    lastPoints = pts;
+  }
+
+  // Verify renderStandingsConstructors execution
+  assert(typeof sandbox.renderStandingsConstructors === 'function', 'renderStandingsConstructors must be a function');
+  sandbox.renderStandingsConstructors();
+
+  const constructorsHtml = mockConstructorsBody.innerHTML;
+  assert(constructorsHtml, 'renderStandingsConstructors must populate standingsConstructorsBody.innerHTML');
+
+  const constructorRowMatches = constructorsHtml.match(/<tr[^>]*class=["'][^"']*standings-row[^"']*["']/gi) || [];
+  assert.strictEqual(constructorRowMatches.length, 10, `Constructors table must render exactly 10 rows, found ${constructorRowMatches.length}`);
+
+  // Assert top-3 podium accent pills for constructors
+  const cP1Match = constructorsHtml.match(/<tr[^>]*data-position=["']1["'][\s\S]*?<\/tr>/i);
+  assert(cP1Match, 'Must render constructor row with data-position="1"');
+  assert(/pos-gold|pos-pill-1/i.test(cP1Match[0]), 'Constructor P1 must have gold podium accent');
+  assert(/Red Bull Racing/i.test(cP1Match[0]), 'Constructor P1 must be Red Bull Racing');
+  assert(/#3671C6/i.test(cP1Match[0]), 'Constructor P1 color must be #3671C6');
+  assert(/446/i.test(cP1Match[0]), 'Constructor P1 points must be 446');
+
+  const cP2Match = constructorsHtml.match(/<tr[^>]*data-position=["']2["'][\s\S]*?<\/tr>/i);
+  assert(cP2Match && /pos-silver|pos-pill-2/i.test(cP2Match[0]), 'Constructor P2 must have silver podium accent');
+  assert(cP2Match && /McLaren/i.test(cP2Match[0]), 'Constructor P2 must be McLaren');
+  assert(cP2Match && /#FF8000/i.test(cP2Match[0]), 'Constructor P2 color must be #FF8000');
+
+  const cP3Match = constructorsHtml.match(/<tr[^>]*data-position=["']3["'][\s\S]*?<\/tr>/i);
+  assert(cP3Match && /pos-bronze|pos-pill-3/i.test(cP3Match[0]), 'Constructor P3 must have bronze podium accent');
+  assert(cP3Match && /Ferrari/i.test(cP3Match[0]), 'Constructor P3 must be Ferrari');
+  assert(cP3Match && /#E80020/i.test(cP3Match[0]), 'Constructor P3 color must be #E80020');
+
+  // Verify all 10 constructors are present with valid colors and descending points
+  const expectedTeams = [
+    { name: 'Red Bull Racing', color: '#3671C6', points: 446, wins: 7 },
+    { name: 'McLaren', color: '#FF8000', points: 438, wins: 3 },
+    { name: 'Ferrari', color: '#E80020', points: 407, wins: 3 },
+    { name: 'Mercedes', color: '#27F4D2', points: 292, wins: 3 },
+    { name: 'Aston Martin', color: '#229971', points: 74, wins: 0 },
+    { name: 'RB', color: '#6692FF', points: 34, wins: 0 },
+    { name: 'Haas', color: '#B6BABD', points: 28, wins: 0 },
+    { name: 'Alpine', color: '#0093CC', points: 13, wins: 0 },
+    { name: 'Williams', color: '#64C4FF', points: 6, wins: 0 },
+    { name: 'Kick Sauber', color: '#52E252', points: 0, wins: 0 }
+  ];
+
+  let lastConstructorPoints = Infinity;
+  expectedTeams.forEach((team, idx) => {
+    const pos = idx + 1;
+    const rowMatch = constructorsHtml.match(new RegExp(`<tr[^>]*data-position=["']${pos}["'][\\s\\S]*?<\\/tr>`, 'i'));
+    assert(rowMatch, `Missing constructor row for position P${pos}`);
+    const rowContent = rowMatch[0];
+
+    assert(rowContent.includes(team.name), `Constructor P${pos} must include team name "${team.name}"`);
+    assert(new RegExp(team.color, 'i').test(rowContent), `Constructor P${pos} must include team color swatch ${team.color}`);
+
+    const ptsMatch = rowContent.match(/<td[^>]*class=["'][^"']*pts-cell[^"']*["'][^>]*>[\s\S]*?([0-9]+)[\s\S]*?<\/td>/i);
+    assert(ptsMatch, `Constructor P${pos} missing points cell value`);
+    const pts = parseInt(ptsMatch[1], 10);
+    assert.strictEqual(pts, team.points, `Constructor P${pos} (${team.name}) points mismatch: expected ${team.points}, got ${pts}`);
+    assert(pts <= lastConstructorPoints, `Constructor standings must be descending in points: ${pts} > ${lastConstructorPoints}`);
+    lastConstructorPoints = pts;
+  });
+
+  // --- 3. Tab Switching Logic Verification ---
+  assert(typeof sandbox.switchStandingsTab === 'function', 'switchStandingsTab must be a callable function');
+
+  // Switch to Constructors
+  sandbox.switchStandingsTab('constructors');
+  assert.strictEqual(Store.state.standingsTab, 'constructors', 'switchStandingsTab("constructors") must set Store.state.standingsTab to "constructors"');
+  assert(mockConstructorsBtn.classList.contains('active'), 'Constructors button must receive .active class');
+  assert(!mockDriversBtn.classList.contains('active'), 'Drivers button must lose .active class');
+  assert.strictEqual(mockConstructorsContainer.style.display, 'block', 'Constructors container display must be "block"');
+  assert.strictEqual(mockDriversContainer.style.display, 'none', 'Drivers container display must be "none"');
+
+  // Switch back to Drivers
+  sandbox.switchStandingsTab('drivers');
+  assert.strictEqual(Store.state.standingsTab, 'drivers', 'switchStandingsTab("drivers") must set Store.state.standingsTab to "drivers"');
+  assert(mockDriversBtn.classList.contains('active'), 'Drivers button must receive .active class');
+  assert(!mockConstructorsBtn.classList.contains('active'), 'Constructors button must lose .active class');
+  assert.strictEqual(mockDriversContainer.style.display, 'block', 'Drivers container display must be "block"');
+  assert.strictEqual(mockConstructorsContainer.style.display, 'none', 'Constructors container display must be "none"');
+
+  // --- 4. Event Binding Verification ---
+  assert(typeof sandbox.initStandingsEvents === 'function', 'initStandingsEvents must be a callable function');
+  sandbox.initStandingsEvents();
+  assert.strictEqual(mockDriversBtn.dataset.eventsBound, 'true', 'initStandingsEvents must set dataset.eventsBound on #tabDriversBtn');
+  assert.strictEqual(mockConstructorsBtn.dataset.eventsBound, 'true', 'initStandingsEvents must set dataset.eventsBound on #tabConstructorsBtn');
+
+  // Trigger click on Constructors button
+  mockConstructorsBtn.dispatchEvent({ type: 'click' });
+  assert.strictEqual(Store.state.standingsTab, 'constructors', 'Clicking #tabConstructorsBtn must switch tab to constructors');
+  assert(mockConstructorsBtn.classList.contains('active'), 'Constructors tab button must be active after click');
+  assert(!mockDriversBtn.classList.contains('active'), 'Drivers tab button must not be active after click');
+
+  // Trigger click on Drivers button
+  mockDriversBtn.dispatchEvent({ type: 'click' });
+  assert.strictEqual(Store.state.standingsTab, 'drivers', 'Clicking #tabDriversBtn must switch tab to drivers');
+  assert(mockDriversBtn.classList.contains('active'), 'Drivers tab button must be active after click');
+  assert(!mockConstructorsBtn.classList.contains('active'), 'Constructors tab button must not be active after click');
+}
+
+/**
  * Main test runner executing all active test suites.
  */
 function runAllTests() {
@@ -1317,8 +1636,11 @@ function runAllTests() {
   testTrackMapCanvasAndKinematics();
   console.log('  PASS: testTrackMapCanvasAndKinematics (HiDPI canvas scaling, toolbar controls, and [0.0, 1.0] kinematics verified)');
 
+  testStandingsTabsAndData();
+  console.log('  PASS: testStandingsTabsAndData (segmented tabs, 22 drivers, 10 constructors, podium accents, descending points verified)');
+
   const durationMs = Date.now() - startTime;
-  console.log(`\n[SUCCESS] All 7 test suites passed cleanly in ${durationMs}ms.`);
+  console.log(`\n[SUCCESS] All 8 test suites passed cleanly in ${durationMs}ms.`);
 }
 
 if (require.main === module) {
@@ -1342,5 +1664,6 @@ module.exports = {
   testDashboardCountdownAndSessions,
   testTimingTower22Drivers,
   testTrackMapCanvasAndKinematics,
+  testStandingsTabsAndData,
   runAllTests
 };
