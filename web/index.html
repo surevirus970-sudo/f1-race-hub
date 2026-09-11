@@ -782,6 +782,165 @@
       color: var(--f1-text-muted);
     }
 
+    /* HiDPI Canvas Track Map & Controls */
+    .track-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .track-circuit-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--f1-surface);
+      border: 1px solid var(--f1-surface-border);
+      border-left: 4px solid var(--f1-red-primary);
+      color: var(--f1-text-white);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      padding: 8px 12px;
+      border-radius: 6px;
+    }
+
+    .track-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .track-ctrl-btn {
+      background-color: var(--f1-surface);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 6px;
+      padding: 7px 14px;
+      color: var(--f1-text-white);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .track-ctrl-btn:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .track-ctrl-btn:active {
+      transform: translateY(1px);
+    }
+
+    .track-ctrl-btn.paused {
+      border-color: var(--flag-yellow);
+      color: var(--flag-yellow);
+    }
+
+    .track-canvas-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      max-height: 520px;
+      background-color: #17171E;
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .track-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .track-legend-container {
+      background-color: var(--f1-surface);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .track-legend-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: var(--f1-text-muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .track-legend {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
+
+    .driver-legend-card {
+      flex: 0 0 auto;
+      background-color: rgba(16, 16, 20, 0.6);
+      border: 1px solid var(--f1-surface-border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      min-width: 105px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: border-color 0.15s ease;
+    }
+
+    .driver-legend-card:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .driver-legend-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .driver-legend-bar {
+      width: 4px;
+      height: 14px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .driver-legend-num {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--f1-text-muted);
+    }
+
+    .driver-legend-code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--f1-text-white);
+    }
+
+    .driver-legend-speed {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: #00D084;
+    }
+
     /* Responsive media queries */
     @media (min-width: 768px) {
       .desktop-tabs {
@@ -1426,7 +1585,109 @@
         <p class="screen-subtitle">Интерактивная векторная траектория и положение болидов</p>
       </header>
       <div id="trackMapContainer">
-        <!-- Vector canvas and playback controls mount point -->
+        <!-- Controls Toolbar -->
+        <div class="track-toolbar" id="trackToolbar">
+          <div class="track-circuit-badge" id="trackCircuitBadge">
+            Autodromo Nazionale Monza • 5.793 km
+          </div>
+          <div class="track-controls" id="trackControls">
+            <button type="button" id="simPlayPauseBtn" class="track-ctrl-btn" aria-label="Пауза симуляции">⏸ Пауза</button>
+            <button type="button" id="simSpeedBtn" class="track-ctrl-btn" aria-label="Скорость симуляции">⚡ 1x</button>
+            <button type="button" id="simResetBtn" class="track-ctrl-btn" aria-label="Сброс симуляции">↺ Сброс</button>
+          </div>
+        </div>
+
+        <!-- Canvas Viewport -->
+        <div class="track-canvas-container" id="trackCanvasContainer">
+          <canvas id="trackCanvas" class="track-canvas" width="800" height="450"></canvas>
+        </div>
+
+        <!-- Driver Legend -->
+        <div class="track-legend-container" id="trackLegendContainer">
+          <div class="track-legend-title">Телеметрия лидеров (Top-10)</div>
+          <div class="track-legend" id="trackLegend">
+            <div class="driver-legend-card" data-driver="VER">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #3671C6;" title="Red Bull Racing"></span>
+                <span class="driver-legend-num">#1</span>
+                <span class="driver-legend-code">VER</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-VER">338 km/h</div>
+            </div>
+            <div class="driver-legend-card" data-driver="NOR">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #FF8000;" title="McLaren"></span>
+                <span class="driver-legend-num">#4</span>
+                <span class="driver-legend-code">NOR</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-NOR">334 km/h</div>
+            </div>
+            <div class="driver-legend-card" data-driver="LEC">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #E80020;" title="Ferrari"></span>
+                <span class="driver-legend-num">#16</span>
+                <span class="driver-legend-code">LEC</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-LEC">332 km/h</div>
+            </div>
+            <div class="driver-legend-card" data-driver="PIA">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #FF8000;" title="McLaren"></span>
+                <span class="driver-legend-num">#81</span>
+                <span class="driver-legend-code">PIA</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-PIA">330 km/h</div>
+            </div>
+            <div class="driver-legend-card" data-driver="SAI">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #E80020;" title="Ferrari"></span>
+                <span class="driver-legend-num">#55</span>
+                <span class="driver-legend-code">SAI</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-SAI">326 km/h</div>
+            </div>
+            <div class="driver-legend-card" data-driver="HAM">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #27F4D2;" title="Mercedes"></span>
+                <span class="driver-legend-num">#44</span>
+                <span class="driver-legend-code">HAM</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-HAM">324 km/h</div>
+            </div>
+            <div class="driver-legend-card" data-driver="RUS">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #27F4D2;" title="Mercedes"></span>
+                <span class="driver-legend-num">#63</span>
+                <span class="driver-legend-code">RUS</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-RUS">321 km/h</div>
+            </div>
+            <div class="driver-legend-card" data-driver="PER">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #3671C6;" title="Red Bull Racing"></span>
+                <span class="driver-legend-num">#11</span>
+                <span class="driver-legend-code">PER</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-PER">318 km/h</div>
+            </div>
+            <div class="driver-legend-card" data-driver="ALO">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #229971;" title="Aston Martin"></span>
+                <span class="driver-legend-num">#14</span>
+                <span class="driver-legend-code">ALO</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-ALO">315 km/h</div>
+            </div>
+            <div class="driver-legend-card" data-driver="GAS">
+              <div class="driver-legend-header">
+                <span class="driver-legend-bar" style="background-color: #0093CC;" title="Alpine"></span>
+                <span class="driver-legend-num">#10</span>
+                <span class="driver-legend-code">GAS</span>
+              </div>
+              <div class="driver-legend-speed" id="legendSpeed-GAS">312 km/h</div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1986,6 +2247,466 @@
     }
 
     /**
+     * Autodromo Nazionale Monza 2D circuit waypoints (normalized [0.0, 1.0]).
+     * Clockwise loop starting at Rettifilo Tribune (Start/Finish straight).
+     */
+    const MONZA_TRACK_WAYPOINTS = [
+      { x: 0.18, y: 0.22 }, // 0: Start/Finish straight
+      { x: 0.35, y: 0.22 }, // 1: Main straight approaching Turn 1
+      { x: 0.44, y: 0.22 }, // 2: Prima Variante braking
+      { x: 0.47, y: 0.25 }, // 3: Prima Variante chicane apex 1
+      { x: 0.50, y: 0.23 }, // 4: Prima Variante chicane apex 2
+      { x: 0.58, y: 0.26 }, // 5: Curva Grande entry
+      { x: 0.70, y: 0.33 }, // 6: Curva Biassono mid
+      { x: 0.78, y: 0.44 }, // 7: Curva Biassono exit / straight
+      { x: 0.81, y: 0.48 }, // 8: Variante della Roggia entry
+      { x: 0.79, y: 0.52 }, // 9: Variante della Roggia chicane
+      { x: 0.82, y: 0.56 }, // 10: Roggia exit towards Lesmo 1
+      { x: 0.86, y: 0.63 }, // 11: Curva di Lesmo 1
+      { x: 0.88, y: 0.71 }, // 12: Straight to Lesmo 2
+      { x: 0.85, y: 0.78 }, // 13: Curva di Lesmo 2
+      { x: 0.75, y: 0.80 }, // 14: Curva del Serraglio straight
+      { x: 0.62, y: 0.80 }, // 15: Serraglio underpass
+      { x: 0.50, y: 0.78 }, // 16: Ascari braking
+      { x: 0.44, y: 0.74 }, // 17: Variante Ascari entry (left)
+      { x: 0.38, y: 0.77 }, // 18: Variante Ascari mid (right)
+      { x: 0.33, y: 0.74 }, // 19: Variante Ascari exit (left)
+      { x: 0.24, y: 0.72 }, // 20: Rettifilo back straight
+      { x: 0.16, y: 0.70 }, // 21: Parabolica braking zone
+      { x: 0.10, y: 0.64 }, // 22: Curva Parabolica entry
+      { x: 0.08, y: 0.52 }, // 23: Curva Parabolica apex
+      { x: 0.09, y: 0.38 }, // 24: Curva Parabolica exit
+      { x: 0.13, y: 0.27 }  // 25: Acceleration towards main straight
+    ];
+
+    /**
+     * Top-10 Drivers in simulated peloton
+     * Leader (VER) ahead, followed by NOR, LEC, PIA, SAI, HAM, RUS, PER, ALO, GAS.
+     */
+    const TRACK_CARS = [
+      { code: 'VER', number: 1, name: 'Max Verstappen', team: 'Red Bull Racing', teamColor: '#3671C6', offset: 0.000 },
+      { code: 'NOR', number: 4, name: 'Lando Norris', team: 'McLaren', teamColor: '#FF8000', offset: 0.035 },
+      { code: 'LEC', number: 16, name: 'Charles Leclerc', team: 'Ferrari', teamColor: '#E80020', offset: 0.068 },
+      { code: 'PIA', number: 81, name: 'Oscar Piastri', team: 'McLaren', teamColor: '#FF8000', offset: 0.098 },
+      { code: 'SAI', number: 55, name: 'Carlos Sainz', team: 'Ferrari', teamColor: '#E80020', offset: 0.132 },
+      { code: 'HAM', number: 44, name: 'Lewis Hamilton', team: 'Mercedes', teamColor: '#27F4D2', offset: 0.165 },
+      { code: 'RUS', number: 63, name: 'George Russell', team: 'Mercedes', teamColor: '#27F4D2', offset: 0.198 },
+      { code: 'PER', number: 11, name: 'Sergio Perez', team: 'Red Bull Racing', teamColor: '#3671C6', offset: 0.232 },
+      { code: 'ALO', number: 14, name: 'Fernando Alonso', team: 'Aston Martin', teamColor: '#229971', offset: 0.265 },
+      { code: 'GAS', number: 10, name: 'Pierre Gasly', team: 'Alpine', teamColor: '#0093CC', offset: 0.298 }
+    ];
+
+    function catmullRomInterpolate(p0, p1, p2, p3, u) {
+      const u2 = u * u;
+      const u3 = u2 * u;
+      return 0.5 * (
+        (2 * p1) +
+        (-p0 + p2) * u +
+        (2 * p0 - 5 * p1 + 4 * p2 - p3) * u2 +
+        (-p0 + 3 * p1 - 3 * p2 + p3) * u3
+      );
+    }
+
+    /**
+     * Computes parametric coordinate (x, y) along normalized circuit.
+     * Guaranteed clamped inside [0.0, 1.0].
+     */
+    function getTrackCoordinates(progress) {
+      let p = progress;
+      if (typeof p !== 'number' || Number.isNaN(p)) {
+        p = 0;
+      }
+      const t = ((p % 1) + 1) % 1;
+      const N = MONZA_TRACK_WAYPOINTS.length;
+      const total = t * N;
+      const idx = Math.floor(total) % N;
+      const u = total - Math.floor(total);
+
+      const p0 = MONZA_TRACK_WAYPOINTS[(idx - 1 + N) % N];
+      const p1 = MONZA_TRACK_WAYPOINTS[idx];
+      const p2 = MONZA_TRACK_WAYPOINTS[(idx + 1) % N];
+      const p3 = MONZA_TRACK_WAYPOINTS[(idx + 2) % N];
+
+      const rawX = catmullRomInterpolate(p0.x, p1.x, p2.x, p3.x, u);
+      const rawY = catmullRomInterpolate(p0.y, p1.y, p2.y, p3.y, u);
+
+      return {
+        x: Math.min(1.0, Math.max(0.0, rawX)),
+        y: Math.min(1.0, Math.max(0.0, rawY))
+      };
+    }
+
+    /**
+     * Calculates simulated speed in km/h within 280–345 km/h boundary.
+     */
+    function getSimulatedSpeed(progress, carIdx) {
+      let p = progress;
+      if (typeof p !== 'number' || Number.isNaN(p)) p = 0;
+      const t = ((p % 1) + 1) % 1;
+
+      let baseSpeed;
+      if ((t >= 0.92 || t <= 0.18) || (t >= 0.66 && t <= 0.76)) {
+        // High speed straightaways (Rettifilo Tribune & Rettifilo back straight)
+        baseSpeed = 330 + Math.sin(t * Math.PI * 4) * 10;
+      } else if ((t >= 0.22 && t <= 0.30) || (t >= 0.46 && t <= 0.54) || (t >= 0.60 && t <= 0.66)) {
+        // Braking and slow chicanes (Prima Variante, Roggia, Ascari)
+        baseSpeed = 285 + Math.cos(t * Math.PI * 8) * 5;
+      } else {
+        // High-speed sweeps (Curva Grande, Curve di Lesmo, Parabolica)
+        baseSpeed = 305 + Math.sin(t * Math.PI * 6) * 8;
+      }
+
+      const carOffset = (((carIdx || 0) * 7) % 9) - 4;
+      const speed = Math.round(baseSpeed + carOffset);
+      return Math.min(345, Math.max(280, speed));
+    }
+
+    let trackSimProgress = 0.0;
+    const TRACK_LAP_MS = 28000;
+
+    /**
+     * HiDPI canvas sizing via window.devicePixelRatio
+     */
+    function resizeTrackCanvas() {
+      const canvas = document.getElementById('trackCanvas');
+      if (!canvas) return;
+      const rect = (typeof canvas.getBoundingClientRect === 'function')
+        ? canvas.getBoundingClientRect()
+        : { width: 800, height: 450 };
+
+      const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1;
+      const displayWidth = rect.width || canvas.clientWidth || 800;
+      const displayHeight = rect.height || canvas.clientHeight || 450;
+
+      canvas.width = displayWidth * dpr;
+      canvas.height = displayHeight * dpr;
+
+      const ctx = (typeof canvas.getContext === 'function') ? canvas.getContext('2d') : null;
+      if (ctx && typeof ctx.scale === 'function') {
+        ctx.scale(dpr, dpr);
+      }
+    }
+
+    /**
+     * Vector circuit and car markers rendering
+     */
+    function renderTrackFrame() {
+      const canvas = document.getElementById('trackCanvas');
+      if (!canvas) return;
+      const ctx = (typeof canvas.getContext === 'function') ? canvas.getContext('2d') : null;
+      if (!ctx) return;
+
+      const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1;
+      const w = (canvas.width / dpr) || 800;
+      const h = (canvas.height / dpr) || 450;
+
+      if (typeof ctx.clearRect === 'function') ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = '#17171E';
+      if (typeof ctx.fillRect === 'function') ctx.fillRect(0, 0, w, h);
+
+      // Circuit Title Watermark
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.font = '700 12px sans-serif';
+      if (typeof ctx.fillText === 'function') {
+        ctx.fillText('AUTODROMO NAZIONALE MONZA • 5.793 KM', 20, 28);
+      }
+
+      // 1. Asphalt roadbed: dark slate #23232C, stroke width 16px
+      const SAMPLES = 200;
+      ctx.beginPath();
+      for (let i = 0; i <= SAMPLES; i++) {
+        const pt = getTrackCoordinates(i / SAMPLES);
+        const x = pt.x * w;
+        const y = pt.y * h;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = '#23232C';
+      ctx.lineWidth = 16;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+
+      // 2. DRS zone indicator (subtle green glowing sector along Rettifilo main straight)
+      ctx.save();
+      ctx.beginPath();
+      const DRS_SAMPLES = 40;
+      for (let s = 0; s <= DRS_SAMPLES; s++) {
+        const drsT = (0.94 + (s / DRS_SAMPLES) * 0.22) % 1;
+        const pt = getTrackCoordinates(drsT);
+        const x = pt.x * w;
+        const y = pt.y * h;
+        if (s === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = 'rgba(0, 208, 132, 0.7)';
+      ctx.lineWidth = 6;
+      ctx.shadowColor = '#00D084';
+      ctx.shadowBlur = 10;
+      ctx.stroke();
+      ctx.restore();
+
+      // 3. Racing line: contrast stroke #3F3F4E, stroke width 2px
+      ctx.beginPath();
+      for (let i = 0; i <= SAMPLES; i++) {
+        const pt = getTrackCoordinates(i / SAMPLES);
+        const x = pt.x * w;
+        const y = pt.y * h;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = '#3F3F4E';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // 4. Start/Finish line: bright white stripe at top apex with checkered accent
+      const pMid = getTrackCoordinates(0.0);
+      const pAhead = getTrackCoordinates(0.005);
+      const pBehind = getTrackCoordinates(0.995);
+      const dx = (pAhead.x - pBehind.x) * w;
+      const dy = (pAhead.y - pBehind.y) * h;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len;
+      const ny = dx / len;
+      const x0 = pMid.x * w;
+      const y0 = pMid.y * h;
+      const ax = x0 - nx * 10;
+      const ay = y0 - ny * 10;
+      const bx = x0 + nx * 10;
+      const by = y0 + ny * 10;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+
+      if (typeof ctx.setLineDash === 'function') {
+        ctx.beginPath();
+        ctx.setLineDash([2, 2]);
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(bx, by);
+        ctx.strokeStyle = '#101014';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 5. Car markers (rendered P10 down to P1 so leader is painted on top)
+      for (let i = TRACK_CARS.length - 1; i >= 0; i--) {
+        const car = TRACK_CARS[i];
+        const carT = ((trackSimProgress - car.offset) % 1 + 1) % 1;
+        const pt = getTrackCoordinates(carT);
+        const cx = pt.x * w;
+        const cy = pt.y * h;
+
+        ctx.save();
+        ctx.beginPath();
+        if (typeof ctx.arc === 'function') {
+          ctx.arc(cx, cy, 12, 0, Math.PI * 2);
+        }
+        ctx.fillStyle = car.teamColor;
+        if (typeof ctx.fill === 'function') ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 10px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        if (typeof ctx.fillText === 'function') {
+          ctx.fillText(String(car.number), cx, cy);
+        }
+        ctx.restore();
+      }
+
+      updateDriverLegendSpeeds();
+    }
+
+    /**
+     * Updates simulated telemetry speed in driver legend cards
+     */
+    function updateDriverLegendSpeeds() {
+      for (let i = 0; i < TRACK_CARS.length; i++) {
+        const car = TRACK_CARS[i];
+        const carT = ((trackSimProgress - car.offset) % 1 + 1) % 1;
+        const speed = getSimulatedSpeed(carT, i);
+        const speedEl = document.getElementById(`legendSpeed-${car.code}`);
+        if (speedEl) {
+          speedEl.textContent = `${speed} km/h`;
+        }
+      }
+    }
+
+    let trackAnimFrameId = null;
+    let lastTrackAnimTime = 0;
+
+    /**
+     * Parametric car animation loop via requestAnimationFrame
+     */
+    function trackAnimationLoop(timestamp) {
+      if (!Store.state.simulationRunning || (typeof document !== 'undefined' && document.hidden) || Store.state.activeTab !== 'trackmap') {
+        trackAnimFrameId = null;
+        return;
+      }
+      if (!lastTrackAnimTime) lastTrackAnimTime = timestamp;
+      const deltaMs = Math.min(100, timestamp - lastTrackAnimTime);
+      lastTrackAnimTime = timestamp;
+
+      trackSimProgress = (trackSimProgress + (deltaMs / TRACK_LAP_MS) * (Store.state.simulationSpeed || 1)) % 1;
+      renderTrackFrame();
+
+      if (typeof requestAnimationFrame === 'function') {
+        trackAnimFrameId = requestAnimationFrame(trackAnimationLoop);
+      }
+    }
+
+    function startTrackAnimation() {
+      if (trackAnimFrameId) return;
+      lastTrackAnimTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      if (typeof requestAnimationFrame === 'function') {
+        trackAnimFrameId = requestAnimationFrame(trackAnimationLoop);
+      }
+    }
+
+    function stopTrackAnimation() {
+      if (trackAnimFrameId) {
+        if (typeof cancelAnimationFrame === 'function') {
+          cancelAnimationFrame(trackAnimFrameId);
+        }
+        trackAnimFrameId = null;
+      }
+      lastTrackAnimTime = 0;
+    }
+
+    /**
+     * Play/Pause simulation playback toggle
+     */
+    function toggleTrackPlayPause() {
+      Store.state.simulationRunning = !Store.state.simulationRunning;
+      const btn = document.getElementById('simPlayPauseBtn');
+      if (btn) {
+        if (Store.state.simulationRunning) {
+          btn.textContent = '⏸ Пауза';
+          btn.classList.remove('paused');
+        } else {
+          btn.textContent = '▶ Старт';
+          btn.classList.add('paused');
+        }
+      }
+
+      if (Store.state.simulationRunning) {
+        if (Store.state.activeTab === 'trackmap' && (typeof document === 'undefined' || !document.hidden)) {
+          startTrackAnimation();
+        }
+      } else {
+        stopTrackAnimation();
+      }
+
+      Store.notify();
+    }
+
+    /**
+     * Speed multiplier 1x <-> 2x toggle
+     */
+    function toggleTrackSimSpeed() {
+      Store.state.simulationSpeed = Store.state.simulationSpeed === 1 ? 2 : 1;
+      const btn = document.getElementById('simSpeedBtn');
+      if (btn) {
+        btn.textContent = `⚡ ${Store.state.simulationSpeed}x`;
+      }
+      Store.notify();
+    }
+
+    /**
+     * Resets simulation progress to zero
+     */
+    function resetTrackSimulation() {
+      trackSimProgress = 0.0;
+      renderTrackFrame();
+      updateDriverLegendSpeeds();
+      Store.notify();
+    }
+
+    /**
+     * Registers delegated event handlers for Track Map toolbar controls
+     */
+    function initTrackMapEvents() {
+      const container = document.getElementById('trackToolbar');
+      if (!container || container.dataset.eventsBound) return;
+      container.dataset.eventsBound = 'true';
+
+      const playPauseBtn = document.getElementById('simPlayPauseBtn');
+      if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', toggleTrackPlayPause);
+      }
+
+      const speedBtn = document.getElementById('simSpeedBtn');
+      if (speedBtn) {
+        speedBtn.addEventListener('click', toggleTrackSimSpeed);
+      }
+
+      const resetBtn = document.getElementById('simResetBtn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', resetTrackSimulation);
+      }
+    }
+
+    // Battery & Resource Management: visibilitychange listener
+    if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+          stopTrackAnimation();
+        } else if (Store.state.activeTab === 'trackmap' && Store.state.simulationRunning) {
+          startTrackAnimation();
+        }
+      });
+    }
+
+    // Window resize handler for canvas HiDPI redraw
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('resize', () => {
+        if (Store.state.activeTab === 'trackmap') {
+          resizeTrackCanvas();
+          renderTrackFrame();
+        }
+      });
+    }
+
+    /**
+     * TrackMapCanvas public API facade
+     */
+    const TrackMapCanvas = {
+      WAYPOINTS: MONZA_TRACK_WAYPOINTS,
+      CARS: TRACK_CARS,
+      getCoordinates: getTrackCoordinates,
+      getSimulatedSpeed,
+      resizeCanvas: resizeTrackCanvas,
+      renderFrame: renderTrackFrame,
+      startAnimation: startTrackAnimation,
+      stopAnimation: stopTrackAnimation,
+      togglePlayPause: toggleTrackPlayPause,
+      toggleSpeed: toggleTrackSimSpeed,
+      reset: resetTrackSimulation
+    };
+
+    if (typeof window !== 'undefined') {
+      window.TrackMapCanvas = TrackMapCanvas;
+      window.getTrackCoordinates = getTrackCoordinates;
+      window.getSimulatedSpeed = getSimulatedSpeed;
+      window.TRACK_CARS = TRACK_CARS;
+      window.toggleTrackPlayPause = toggleTrackPlayPause;
+      window.toggleTrackSimSpeed = toggleTrackSimSpeed;
+      window.resetTrackSimulation = resetTrackSimulation;
+      window.resizeTrackCanvas = resizeTrackCanvas;
+    }
+
+    /**
      * Client-Side Hash Router
      */
     const VALID_ROUTES = ['dashboard', 'timing', 'trackmap', 'standings'];
@@ -2017,6 +2738,17 @@
         }
       });
 
+      // Manage trackmap animation state based on route
+      if (targetRoute === 'trackmap') {
+        resizeTrackCanvas();
+        renderTrackFrame();
+        if (Store.state.simulationRunning && (typeof document === 'undefined' || !document.hidden)) {
+          startTrackAnimation();
+        }
+      } else {
+        stopTrackAnimation();
+      }
+
       // Notify store subscribers of active route transition
       Store.notify();
     }
@@ -2032,6 +2764,12 @@
       renderTimingTable();
       initTimingEvents();
       initTimingSimulation();
+      initTrackMapEvents();
+      resizeTrackCanvas();
+      renderTrackFrame();
+      if (Store.state.activeTab === 'trackmap' && Store.state.simulationRunning && (typeof document === 'undefined' || !document.hidden)) {
+        startTrackAnimation();
+      }
     }
 
     // Router event subscriptions

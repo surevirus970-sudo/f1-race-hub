@@ -959,6 +959,337 @@ function testTimingTower22Drivers(htmlFilePath = path.join(__dirname, '../web/in
 }
 
 /**
+ * Suite 7: Validates HiDPI Canvas circuit map, Controls toolbar, Top-10 driver legend,
+ * and parametric car kinematics with coordinate clamping inside [0.0, 1.0].
+ */
+function testTrackMapCanvasAndKinematics(htmlFilePath = path.join(__dirname, '../web/index.html')) {
+  assert(fs.existsSync(htmlFilePath), `HTML file does not exist: ${htmlFilePath}`);
+  const html = fs.readFileSync(htmlFilePath, 'utf8');
+
+  // --- 1. Static HTML & CSS DOM verification ---
+  // Canvas existence and classes
+  assert(
+    /<canvas[^>]+id=["']trackCanvas["'][^>]+class=["'][^"']*track-canvas[^"']*["']/i.test(html) ||
+    /<canvas[^>]+class=["'][^"']*track-canvas[^"']*["'][^>]+id=["']trackCanvas["']/i.test(html),
+    'Missing <canvas id="trackCanvas" class="track-canvas">'
+  );
+
+  // Controls toolbar buttons
+  assert(/id=["']simPlayPauseBtn["']/i.test(html), 'Missing #simPlayPauseBtn playback button');
+  assert(/id=["']simSpeedBtn["']/i.test(html), 'Missing #simSpeedBtn speed multiplier button');
+  assert(/id=["']simResetBtn["']/i.test(html), 'Missing #simResetBtn reset button');
+
+  // Circuit badge and track metrics
+  assert(/Autodromo Nazionale Monza\s*•\s*5\.793\s*km/i.test(html), 'Missing circuit badge with "Autodromo Nazionale Monza • 5.793 km"');
+
+  // Responsive CSS constraints
+  assert(
+    /\.track-canvas-container\s*\{[^}]*aspect-ratio\s*:\s*16\s*\/\s*9/i.test(html),
+    'Missing CSS aspect-ratio: 16 / 9 for .track-canvas-container'
+  );
+  assert(
+    /\.track-canvas-container\s*\{[^}]*max-height\s*:\s*520px/i.test(html),
+    'Missing CSS max-height constraint for .track-canvas-container'
+  );
+  assert(
+    /\.track-canvas\s*\{[^}]*width\s*:\s*100%/i.test(html),
+    'Missing CSS width: 100% for .track-canvas'
+  );
+
+  // Top-10 Driver Legend Cards
+  const requiredDrivers = ['VER', 'NOR', 'LEC', 'PIA', 'SAI', 'HAM', 'RUS', 'PER', 'ALO', 'GAS'];
+  requiredDrivers.forEach(code => {
+    assert(
+      html.includes(`data-driver="${code}"`),
+      `Driver legend must contain card for driver code ${code}`
+    );
+    assert(
+      html.includes(`id="legendSpeed-${code}"`),
+      `Driver legend must contain speed element with id="legendSpeed-${code}"`
+    );
+  });
+
+  // Vector drawing specifications in script
+  assert(html.includes('#23232C'), 'Missing asphalt roadbed color token #23232C');
+  assert(html.includes('#3F3F4E'), 'Missing racing line color token #3F3F4E');
+  assert(html.includes('devicePixelRatio'), 'Missing window.devicePixelRatio HiDPI canvas scaling logic');
+
+  // --- 2. VM Execution & Kinematics Engine Verification ---
+  const scriptMatch = html.match(/<script>([\s\S]*?)<\/script>/i);
+  assert(scriptMatch, 'Missing <script> block in web/index.html');
+  const scriptCode = scriptMatch[1];
+
+  function createMockElement(id = '', initialClasses = '') {
+    const classes = new Set(initialClasses.split(' ').filter(Boolean));
+    const attributes = {};
+    const listeners = {};
+    return {
+      id,
+      get className() {
+        return Array.from(classes).join(' ');
+      },
+      set className(val) {
+        classes.clear();
+        (val || '').split(' ').filter(Boolean).forEach(c => classes.add(c));
+      },
+      classList: {
+        add: (...names) => names.forEach(n => classes.add(n)),
+        remove: (...names) => names.forEach(n => classes.delete(n)),
+        contains: (n) => classes.has(n),
+        toggle: (n) => (classes.has(n) ? classes.delete(n) : classes.add(n))
+      },
+      dataset: {},
+      innerHTML: '',
+      textContent: '',
+      style: {},
+      width: 800,
+      height: 450,
+      clientWidth: 800,
+      clientHeight: 450,
+      getBoundingClientRect: () => ({ width: 800, height: 450, top: 0, left: 0, right: 800, bottom: 450 }),
+      setAttribute: (k, v) => { attributes[k] = String(v); },
+      getAttribute: (k) => attributes[k] || null,
+      hasAttribute: (k) => k in attributes,
+      removeAttribute: (k) => { delete attributes[k]; },
+      addEventListener: (evt, fn) => {
+        listeners[evt] = listeners[evt] || [];
+        listeners[evt].push(fn);
+      },
+      dispatchEvent: (evt) => {
+        (listeners[evt.type] || []).forEach(fn => fn(evt));
+      },
+      closest: function(sel) {
+        if (sel === '.track-ctrl-btn') return this;
+        return null;
+      }
+    };
+  }
+
+  const mockCtxCalls = {
+    scale: [],
+    clearRect: 0,
+    fillRect: 0,
+    beginPath: 0,
+    closePath: 0,
+    stroke: 0,
+    fill: 0,
+    arc: 0
+  };
+
+  const mockCtx = {
+    scale: (sx, sy) => { mockCtxCalls.scale.push({ sx, sy }); },
+    clearRect: () => { mockCtxCalls.clearRect++; },
+    fillRect: () => { mockCtxCalls.fillRect++; },
+    beginPath: () => { mockCtxCalls.beginPath++; },
+    closePath: () => { mockCtxCalls.closePath++; },
+    moveTo: () => {},
+    lineTo: () => {},
+    stroke: () => { mockCtxCalls.stroke++; },
+    fill: () => { mockCtxCalls.fill++; },
+    arc: () => { mockCtxCalls.arc++; },
+    fillText: () => {},
+    save: () => {},
+    restore: () => {},
+    setLineDash: () => {},
+    setTransform: (a, b, c, d, e, f) => { mockCtxCalls.scale.push({ sx: a, sy: d }); }
+  };
+
+  const mockCanvas = createMockElement('trackCanvas', 'track-canvas');
+  mockCanvas.getContext = () => mockCtx;
+
+  const mockPlayPauseBtn = createMockElement('simPlayPauseBtn', 'track-ctrl-btn');
+  mockPlayPauseBtn.textContent = '⏸ Пауза';
+
+  const mockSpeedBtn = createMockElement('simSpeedBtn', 'track-ctrl-btn');
+  mockSpeedBtn.textContent = '⚡ 1x';
+
+  const mockResetBtn = createMockElement('simResetBtn', 'track-ctrl-btn');
+  mockResetBtn.textContent = '↺ Сброс';
+
+  const mockToolbar = createMockElement('trackToolbar');
+  const mockMapContainer = createMockElement('trackMapContainer');
+  const mockLegendContainer = createMockElement('trackLegendContainer');
+
+  const speedElements = {};
+  requiredDrivers.forEach(code => {
+    speedElements[`legendSpeed-${code}`] = createMockElement(`legendSpeed-${code}`);
+    speedElements[`legendSpeed-${code}`].textContent = '300 km/h';
+  });
+
+  const domElements = {
+    trackCanvas: mockCanvas,
+    simPlayPauseBtn: mockPlayPauseBtn,
+    simSpeedBtn: mockSpeedBtn,
+    simResetBtn: mockResetBtn,
+    trackToolbar: mockToolbar,
+    trackMapContainer: mockMapContainer,
+    trackLegendContainer: mockLegendContainer,
+    raceControlBanner: createMockElement('raceControlBanner'),
+    raceControlStatusText: createMockElement('raceControlStatusText'),
+    timingTableBody: createMockElement('timingTableBody'),
+    timingBannerContainer: createMockElement('timingBannerContainer'),
+    timingTableContainer: createMockElement('timingTableContainer'),
+    dashboardSessionsContainer: createMockElement('dashboardSessionsContainer'),
+    sessionsList: createMockElement('sessionsList'),
+    countDays: createMockElement('countDays'),
+    countHours: createMockElement('countHours'),
+    countMins: createMockElement('countMins'),
+    countSecs: createMockElement('countSecs'),
+    countdownSessionLabel: createMockElement('countdownSessionLabel'),
+    dashGpTitle: createMockElement('dashGpTitle'),
+    dashGpCircuit: createMockElement('dashGpCircuit'),
+    networkStatusBadge: createMockElement('networkStatusBadge'),
+    ...speedElements
+  };
+
+  const sandbox = {
+    console,
+    Date,
+    Math,
+    String,
+    Number,
+    Boolean,
+    parseFloat,
+    parseInt,
+    TypeError,
+    Set,
+    Array,
+    Intl,
+    performance: { now: () => 1000 },
+    localStorage: {
+      getItem: () => null,
+      setItem: () => {},
+      removeItem: () => {}
+    },
+    window: {
+      location: { hash: '#trackmap' },
+      devicePixelRatio: 2,
+      addEventListener: () => {}
+    },
+    document: {
+      readyState: 'complete',
+      hidden: false,
+      getElementById: (id) => domElements[id] || null,
+      querySelectorAll: (sel) => {
+        if (sel === '.screen') return [];
+        if (sel === '.nav-item') return [];
+        if (sel === '.flag-btn') return [];
+        return [];
+      },
+      addEventListener: () => {}
+    },
+    Notification: {
+      requestPermission: () => Promise.resolve('granted')
+    },
+    setInterval: () => 1,
+    clearInterval: () => {},
+    requestAnimationFrame: () => 1,
+    cancelAnimationFrame: () => {}
+  };
+
+  vm.createContext(sandbox);
+  vm.runInContext(scriptCode, sandbox);
+
+  const Store = sandbox.Store || sandbox.window.Store;
+  assert(Store && Store.state, 'Store must be initialized with state');
+
+  const TrackMapCanvas = sandbox.TrackMapCanvas || sandbox.window.TrackMapCanvas;
+  const getCoords = sandbox.getTrackCoordinates || (sandbox.window && sandbox.window.getTrackCoordinates) || (TrackMapCanvas && TrackMapCanvas.getCoordinates);
+  assert(typeof getCoords === 'function', 'getTrackCoordinates must be exported as a callable function');
+
+  const getSpeed = sandbox.getSimulatedSpeed || (sandbox.window && sandbox.window.getSimulatedSpeed) || (TrackMapCanvas && TrackMapCanvas.getSimulatedSpeed);
+  assert(typeof getSpeed === 'function', 'getSimulatedSpeed must be a callable function');
+
+  const cars = (TrackMapCanvas && TrackMapCanvas.CARS) || sandbox.TRACK_CARS || (sandbox.window && sandbox.window.TRACK_CARS);
+  const resizeCanvas = sandbox.resizeTrackCanvas || (sandbox.window && sandbox.window.resizeTrackCanvas) || (TrackMapCanvas && TrackMapCanvas.resizeCanvas);
+  const togglePlayPause = sandbox.toggleTrackPlayPause || (sandbox.window && sandbox.window.toggleTrackPlayPause) || (TrackMapCanvas && TrackMapCanvas.togglePlayPause);
+  const toggleSimSpeed = sandbox.toggleTrackSimSpeed || (sandbox.window && sandbox.window.toggleTrackSimSpeed) || (TrackMapCanvas && TrackMapCanvas.toggleSpeed);
+  const resetSimulation = sandbox.resetTrackSimulation || (sandbox.window && sandbox.window.resetTrackSimulation) || (TrackMapCanvas && TrackMapCanvas.reset);
+
+  // Assert 1000 parametric sample points strictly clamped inside [0.0, 1.0]
+  for (let step = 0; step <= 1000; step++) {
+    const t = step / 1000;
+    const pt = getCoords(t);
+    assert(typeof pt === 'object' && pt !== null, `Step ${step} (t=${t}): must return object`);
+    assert(typeof pt.x === 'number' && Number.isFinite(pt.x), `Step ${step}: pt.x must be finite number`);
+    assert(typeof pt.y === 'number' && Number.isFinite(pt.y), `Step ${step}: pt.y must be finite number`);
+    assert(pt.x >= 0.0 && pt.x <= 1.0, `Step ${step} (t=${t}): pt.x=${pt.x} outside [0.0, 1.0]`);
+    assert(pt.y >= 0.0 && pt.y <= 1.0, `Step ${step} (t=${t}): pt.y=${pt.y} outside [0.0, 1.0]`);
+  }
+
+  // Assert boundary and out-of-range cases clamp inside [0.0, 1.0]
+  const edgeCases = [-10.5, -1.0, -0.001, 0.0, 1.0, 1.001, 2.5, 99.9, NaN, undefined, 'invalid'];
+  edgeCases.forEach(edge => {
+    const pt = getCoords(edge);
+    assert(typeof pt.x === 'number' && Number.isFinite(pt.x), `Edge ${edge}: pt.x not finite`);
+    assert(typeof pt.y === 'number' && Number.isFinite(pt.y), `Edge ${edge}: pt.y not finite`);
+    assert(pt.x >= 0.0 && pt.x <= 1.0, `Edge ${edge}: pt.x=${pt.x} outside [0.0, 1.0]`);
+    assert(pt.y >= 0.0 && pt.y <= 1.0, `Edge ${edge}: pt.y=${pt.y} outside [0.0, 1.0]`);
+  });
+
+  // HiDPI Canvas Scaling Assertion (dpr = 2)
+  resizeCanvas();
+  assert.strictEqual(mockCanvas.width, 800 * 2, 'Canvas width must scale by devicePixelRatio (800 * 2 = 1600)');
+  assert.strictEqual(mockCanvas.height, 450 * 2, 'Canvas height must scale by devicePixelRatio (450 * 2 = 900)');
+  assert(mockCtxCalls.scale.length > 0, 'Context scale must be invoked with devicePixelRatio');
+
+  // Verify Play/Pause Toggle
+  assert.strictEqual(Store.state.simulationRunning, true, 'Default simulationRunning state must be true');
+  togglePlayPause();
+  assert.strictEqual(Store.state.simulationRunning, false, 'toggleTrackPlayPause must set simulationRunning to false');
+  assert(mockPlayPauseBtn.textContent.includes('Старт'), 'Button text must change to include "Старт" when paused');
+  assert(mockPlayPauseBtn.classList.contains('paused'), 'Button must receive .paused class');
+
+  togglePlayPause();
+  assert.strictEqual(Store.state.simulationRunning, true, 'toggleTrackPlayPause must resume simulationRunning to true');
+  assert(mockPlayPauseBtn.textContent.includes('Пауза'), 'Button text must change to include "Пауза" when running');
+  assert(!mockPlayPauseBtn.classList.contains('paused'), 'Button must not have .paused class when running');
+
+  // Verify Speed Multiplier Toggle
+  assert.strictEqual(Store.state.simulationSpeed, 1, 'Default simulationSpeed must be 1');
+  toggleSimSpeed();
+  assert.strictEqual(Store.state.simulationSpeed, 2, 'toggleTrackSimSpeed must set simulationSpeed to 2');
+  assert(mockSpeedBtn.textContent.includes('2x'), 'Button text must reflect 2x speed');
+
+  toggleSimSpeed();
+  assert.strictEqual(Store.state.simulationSpeed, 1, 'toggleTrackSimSpeed must toggle back to 1');
+  assert(mockSpeedBtn.textContent.includes('1x'), 'Button text must reflect 1x speed');
+
+  // Verify Reset Behavior
+  resetSimulation();
+  assert(mockCtxCalls.clearRect > 0, 'Reset must trigger canvas redraw');
+
+  // Verify Speed Kinematics (280–345 km/h boundary across all 10 cars)
+  for (let carIdx = 0; carIdx < 10; carIdx++) {
+    for (let s = 0; s <= 100; s++) {
+      const speed = getSpeed(s / 100, carIdx);
+      assert(Number.isInteger(speed), `Speed must be an integer, got: ${speed}`);
+      assert(speed >= 280 && speed <= 345, `Speed ${speed} km/h for car ${carIdx} outside [280, 345] km/h`);
+    }
+  }
+
+  // Verify Top 10 Drivers sequence: VER leader ahead, followed by NOR, LEC, PIA, SAI, HAM, RUS, PER, ALO, GAS
+  assert(Array.isArray(cars) && cars.length === 10, 'Must define exactly 10 cars for trackmap');
+  assert.strictEqual(cars[0].code, 'VER', 'Leader must be VER');
+  assert.strictEqual(cars[0].offset, 0.0, 'Leader VER offset must be 0.0');
+
+  const expectedOrder = ['VER', 'NOR', 'LEC', 'PIA', 'SAI', 'HAM', 'RUS', 'PER', 'ALO', 'GAS'];
+  cars.forEach((car, idx) => {
+    assert.strictEqual(car.code, expectedOrder[idx], `Car at index ${idx} must be ${expectedOrder[idx]}`);
+    if (idx > 0) {
+      assert(car.offset > cars[idx - 1].offset, `Car ${car.code} offset must be behind preceding car`);
+    }
+  });
+
+  // Verify Event Delegation Initialization
+  const initEvents = sandbox.initTrackMapEvents || (sandbox.window && sandbox.window.initTrackMapEvents);
+  if (typeof initEvents === 'function') {
+    initEvents();
+    assert.strictEqual(mockToolbar.dataset.eventsBound, 'true', 'initTrackMapEvents must set dataset.eventsBound');
+  }
+}
+
+/**
  * Main test runner executing all active test suites.
  */
 function runAllTests() {
@@ -983,8 +1314,11 @@ function runAllTests() {
   testTimingTower22Drivers();
   console.log('  PASS: testTimingTower22Drivers (22 rows, leader gap, tyre badges, race control flag transitions verified)');
 
+  testTrackMapCanvasAndKinematics();
+  console.log('  PASS: testTrackMapCanvasAndKinematics (HiDPI canvas scaling, toolbar controls, and [0.0, 1.0] kinematics verified)');
+
   const durationMs = Date.now() - startTime;
-  console.log(`\n[SUCCESS] All 6 test suites passed cleanly in ${durationMs}ms.`);
+  console.log(`\n[SUCCESS] All 7 test suites passed cleanly in ${durationMs}ms.`);
 }
 
 if (require.main === module) {
@@ -1007,5 +1341,6 @@ module.exports = {
   testHtmlStructureAndRouting,
   testDashboardCountdownAndSessions,
   testTimingTower22Drivers,
+  testTrackMapCanvasAndKinematics,
   runAllTests
 };
